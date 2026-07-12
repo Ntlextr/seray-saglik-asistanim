@@ -13,6 +13,28 @@ jobs:
         run: unzip -o "Seray_AI_Saglik_Asistanim (flutlab.io).zip" -d .
       - name: Kotlin surumunu guncelle
         run: sed -i 's/org.jetbrains.kotlin.android") version "1.8.22"/org.jetbrains.kotlin.android") version "2.1.0"/' android/settings.gradle.kts
+      - name: Gemini paketini guncelle
+        run: |
+          python3 - <<'EOF'
+          with open('pubspec.yaml') as f:
+              content = f.read()
+          content = content.replace('google_generative_ai: ^0.4.0', 'googleai_dart: ^2.1.0')
+          with open('pubspec.yaml', 'w') as f:
+              f.write(content)
+
+          with open('lib/main.dart') as f:
+              content = f.read()
+          content = content.replace(
+              "import 'package:google_generative_ai/google_generative_ai.dart';",
+              "import 'package:googleai_dart/googleai_dart.dart';"
+          )
+          content = content.replace(
+              "final model = GenerativeModel(model: 'gemini-3.5-flash', apiKey: _apiKey);\n      final response = await model.generateContent([Content.text(metin)]);",
+              "final client = GoogleAIClient(config: GoogleAIConfig.googleAI(authProvider: ApiKeyProvider(_apiKey)));\n      final response = await client.models.generateContent(model: 'gemini-2.5-flash', request: GenerateContentRequest(contents: [Content(parts: [TextPart(metin)], role: 'user')]));"
+          )
+          with open('lib/main.dart', 'w') as f:
+              f.write(content)
+          EOF
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.32.0'
