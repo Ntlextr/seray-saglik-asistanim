@@ -1,0 +1,19 @@
+name: seray_saglik
+description: Seray Saglik Asistani
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: 2.2.3
+  google_generative_ai: ^0.4.0
+  flutter_tts: ^4.0.2
+  speech_to_text: ^7.0.0
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
