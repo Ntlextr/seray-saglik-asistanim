@@ -13,7 +13,7 @@ jobs:
         run: unzip -o "Seray_AI_Saglik_Asistanim (flutlab.io).zip" -d .
       - name: Kotlin surumunu guncelle
         run: sed -i 's/org.jetbrains.kotlin.android") version "1.8.22"/org.jetbrains.kotlin.android") version "2.1.0"/' android/settings.gradle.kts
-      - name: Gemini paketini guncelle
+      - name: Gemini paketini ve anahtarini guncelle
         run: |
           python3 - <<'EOF'
           with open('pubspec.yaml') as f:
@@ -27,6 +27,10 @@ jobs:
           content = content.replace(
               "import 'package:google_generative_ai/google_generative_ai.dart';",
               "import 'package:googleai_dart/googleai_dart.dart';"
+          )
+          content = content.replace(
+              "AQ.Ab8RN6KkWuaBfsFPcqC6udSR_oeJHr5_x8b6_A76gV8GbyB1hg",
+              "AQ.Ab8RN6LQTThMgNTmxqX8O5VfkGFxrSRGPG5UjUgYN0TdR2Y8Lg"
           )
           old_block = (
               "final model = GenerativeModel(model: 'gemini-3.5-flash', apiKey: _apiKey);\n"
