@@ -13,7 +13,7 @@ jobs:
         run: unzip -o "Seray_AI_Saglik_Asistanim (flutlab.io).zip" -d .
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.32.0'
           channel: 'stable'
       - run: flutter pub get
       - run: flutter build apk --release
