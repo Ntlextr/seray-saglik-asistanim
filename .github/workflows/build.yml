@@ -11,6 +11,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Zip'i ac
         run: unzip -o "Seray_AI_Saglik_Asistanim (flutlab.io).zip" -d .
+      - name: Kotlin surumunu guncelle
+        run: sed -i 's/org.jetbrains.kotlin.android") version "1.8.22"/org.jetbrains.kotlin.android") version "2.1.0"/' android/settings.gradle.kts
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.32.0'
