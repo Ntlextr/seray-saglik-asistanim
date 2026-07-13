@@ -12,7 +12,7 @@ jobs:
       - name: Zip'i ac ve yapiyi duzelt
         run: |
           mkdir -p gecici_klasor
-          unzip -o Seray_Saglik_Asistanim_ILAVELI.zip -d gecici_klasor
+          unzip -o Seray_Trknoloji.zip -d gecici_klasor
           if [ -f gecici_klasor/pubspec.yaml ]; then
             KAYNAK="gecici_klasor"
           else
@@ -33,8 +33,8 @@ jobs:
       - run: flutter pub get
       - run: flutter build apk --release
       - name: APK'yi numarala
-        run: cp build/app/outputs/flutter-apk/app-release.apk seray-saglik-v${{ github.run_number }}.apk
+        run: cp build/app/outputs/flutter-apk/app-release.apk seray-tekno-v${{ github.run_number }}.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: seray-saglik-v${{ github.run_number }}
-          path: seray-saglik-v${{ github.run_number }}.apk
+          name: seray-tekno-v${{ github.run_number }}
+          path: seray-tekno-v${{ github.run_number }}.apk
