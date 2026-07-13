@@ -1,5 +1,4 @@
 name: Build APK
-
 on:
   push:
     branches: [ main ]
@@ -8,29 +7,34 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Zip'i aç
-        run: unzip -o Seray_Saglik_Asistanim_ILAVELI.zip -d .
-
+      - name: Zip'i ac ve yapiyi duzelt
+        run: |
+          mkdir -p gecici_klasor
+          unzip -o Seray_Saglik_Asistanim_ILAVELI.zip -d gecici_klasor
+          if [ -f gecici_klasor/pubspec.yaml ]; then
+            KAYNAK="gecici_klasor"
+          else
+            KAYNAK=$(dirname "$(find gecici_klasor -maxdepth 3 -name pubspec.yaml | head -n 1)")
+          fi
+          echo "Bulunan proje klasoru: $KAYNAK"
+          cp -r "$KAYNAK"/. .
+      - name: Kontrol
+        run: |
+          echo "pubspec.yaml var mi:"
+          ls pubspec.yaml
+          echo "main.dart var mi:"
+          ls lib/main.dart
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.32.0"
-          channel: stable
-
-      - run: flutter doctor -v
-
+          flutter-version: '3.32.0'
+          channel: 'stable'
       - run: flutter pub get
-
       - run: flutter build apk --release
-
       - name: APK'yi numarala
         run: cp build/app/outputs/flutter-apk/app-release.apk seray-saglik-v${{ github.run_number }}.apk
-
       - uses: actions/upload-artifact@v4
         with:
           name: seray-saglik-v${{ github.run_number }}
           path: seray-saglik-v${{ github.run_number }}.apk
-          
