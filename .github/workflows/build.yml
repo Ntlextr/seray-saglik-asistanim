@@ -12,7 +12,7 @@ jobs:
       - name: Zip'i ac ve yapiyi duzelt
         run: |
           mkdir -p gecici_klasor
-          unzip -o Seray_Trknoloji.zip -d gecici_klasor
+          unzip -o Seray_Teknoloji.zip -d gecici_klasor
           if [ -f gecici_klasor/pubspec.yaml ]; then
             KAYNAK="gecici_klasor"
           else
