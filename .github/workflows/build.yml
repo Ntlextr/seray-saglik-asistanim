@@ -17,7 +17,9 @@ jobs:
           channel: 'stable'
       - run: flutter pub get
       - run: flutter build apk --release
+      - name: APK'yi numarala
+        run: cp build/app/outputs/flutter-apk/app-release.apk seray-saglik-v${{ github.run_number }}.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: seray-saglik-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: seray-saglik-v${{ github.run_number }}
+          path: seray-saglik-v${{ github.run_number }}.apk
