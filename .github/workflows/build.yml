@@ -1,3 +1,4 @@
+name: Build APK
 on:
   push:
     branches: [ main ]
@@ -8,33 +9,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      # 1. Eski zip sistemini aynen koruyoruz
-      - name: Zip'i ac ve yapiyi duzelt
+      - name: Zip'i ac ve yapiyi duzelt (varsa)
         run: |
-          mkdir -p gecici_klasor
-          unzip -o Seray_Teknoloji.zip -d gecici_klasor
-          if [ -f gecici_klasor/pubspec.yaml ]; then
-            KAYNAK="gecici_klasor"
-          else
-            KAYNAK=$(dirname "$(find gecici_klasor -maxdepth 3 -name pubspec.yaml | head -n 1)")
+          if [ -f Seray_Teknoloji_v2.zip ]; then
+            mkdir -p gecici_klasor
+            unzip -o Seray_Teknoloji_v2.zip -d gecici_klasor
+            if [ -f gecici_klasor/pubspec.yaml ]; then
+              KAYNAK="gecici_klasor"
+            else
+              KAYNAK=$(dirname "$(find gecici_klasor -maxdepth 3 -name pubspec.yaml | head -n 1)")
+            fi
+            echo "Bulunan proje klasoru: $KAYNAK"
+            cp -r "$KAYNAK"/. .
           fi
-          cp -r "$KAYNAK"/. .
-
-      # 2. Flutter ortamı
+      - name: Kontrol
+        run: |
+          echo "pubspec.yaml var mi:"
+          ls pubspec.yaml
+          echo "main.dart var mi:"
+          ls lib/main.dart
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.32.0'
           channel: 'stable'
-
-      # 3. Build süreci (Burada karmaşayı azalttık)
       - run: flutter pub get
       - run: flutter build apk --release
-
-      # 4. Çıktı alma
       - name: APK'yi numarala
-        run: cp build/app/outputs/flutter-apk/app-release.apk seray-tekno-v${{ github.run_number }}.apk
+        run: cp build/app/outputs/flutter-apk/app-release.apk seray-teknoloji-v${{ github.run_number }}.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: seray-tekno-v${{ github.run_number }}
-          path: seray-tekno-v${{ github.run_number }}.apk
+          name: seray-teknoloji-v${{ github.run_number }}
+          path: seray-teknoloji-v${{ github.run_number }}.apk
