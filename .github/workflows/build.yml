@@ -1,6 +1,3 @@
-jobs:
-  build:
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Zip'i ac ve yapiyi duzelt
@@ -12,12 +9,7 @@ jobs:
           else
             KAYNAK=$(dirname "$(find gecici_klasor -maxdepth 3 -name pubspec.yaml | head -n 1)")
           fi
-          echo "Bulunan proje klasoru: $KAYNAK"
           cp -r "$KAYNAK"/. .
-      - name: Kontrol
-        run: |
-          echo "pubspec.yaml var mi:"
-          ls pubspec.yaml
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.32.0'
