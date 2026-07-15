@@ -9,11 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Zip'i ac ve yapiyi duzelt (varsa)
+      - name: Zip'i bul, ac ve yapiyi duzelt
         run: |
-          if [ -f Seray_Teknoloji_v2.zip ]; then
+          ZIP_DOSYASI=$(find . -maxdepth 1 -name "*.zip" | head -n 1)
+          if [ -n "$ZIP_DOSYASI" ]; then
+            echo "Bulunan zip: $ZIP_DOSYASI"
             mkdir -p gecici_klasor
-            unzip -o Seray_Teknoloji_v2.zip -d gecici_klasor
+            unzip -o "$ZIP_DOSYASI" -d gecici_klasor
             if [ -f gecici_klasor/pubspec.yaml ]; then
               KAYNAK="gecici_klasor"
             else
@@ -21,6 +23,8 @@ jobs:
             fi
             echo "Bulunan proje klasoru: $KAYNAK"
             cp -r "$KAYNAK"/. .
+          else
+            echo "UYARI: Repo icinde .zip dosyasi bulunamadi."
           fi
       - name: Kontrol
         run: |
