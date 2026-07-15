@@ -37,6 +37,11 @@ jobs:
           flutter-version: '3.32.0'
           channel: 'stable'
       - run: flutter pub get
+      
+      # YENİ: Zip'ten gelen eski android klasörünü silip güncel altyapıyı üreten sihirli komut
+      - name: Android Altyapisini Sifirdan Olustur
+        run: flutter create . --platforms android
+
       - run: flutter build apk --release
       - name: APK'yi numarala
         run: cp build/app/outputs/flutter-apk/app-release.apk seray-teknoloji-v${{ github.run_number }}.apk
