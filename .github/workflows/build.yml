@@ -37,7 +37,6 @@ jobs:
           flutter-version: '3.32.0'
           channel: 'stable'
 
-      # YENİ: Bozuk kaydedilen tüm kod dosyalarını otomatik standart UTF-8'e çeviren kurtarıcı adım
       - name: Kod Dosyalarindaki UTF-8 Karakter Bozukluklarini Otomatik Tamir Et
         run: |
           find lib/ -name "*.dart" -type f -exec sh -c 'iconv -f WINDOWS-1254 -t UTF-8 "$1" > "$1.tmp" && mv "$1.tmp" "$1"' _ {} \; || true
@@ -47,6 +46,13 @@ jobs:
       
       - name: Android Altyapisini Sifirdan Olustur
         run: flutter create . --platforms android
+
+      # YENİ: flutter_tts paketinin istediği Android minSdk sınırını otomatik 24 yapan akıllı yama
+      - name: Android SDK Sinirlarini Otomatik Yukselt
+        run: |
+          if [ -f android/app/build.gradle ]; then
+            sed -i 's/minSdkVersion.*/minSdkVersion 24/g' android/app/build.gradle
+          fi
 
       - run: flutter build apk --release
       - name: APK'yi numarala
