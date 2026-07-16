@@ -40,46 +40,50 @@ jobs:
           flutter-version: '3.32.0'
           channel: 'stable'
 
-      - name: Googleai_dart Kütüphanesini Arka Planda Güncelle
+      # SİHİRLİ ADIM 1: Google paketini senin Flutter sürümünle %100 uyumlu kararlı eski sürüme çekiyoruz
+      - name: Googleai_dart Kütüphanesini Kararlı Sürüme Sabitle
         run: |
-          sed -i 's/googleai_dart:.*/googleai_dart: ^3.1.0/g' pubspec.yaml
+          sed -i 's/googleai_dart:.*/googleai_dart: ^2.1.0/g' pubspec.yaml
 
-      # SİHİRLİ ADIM 1: Projedeki İSTİSNASIZ TÜM sayfaları (main.dart dahil) tarayıp bozuk harfleri gıcır gıcır Türkçe yapar
-      - name: Tüm Sayfalardaki Karakter Bozukluklarini Küresel Olarak Onar
+      # SİHİRLİ ADIM 2: Hata veren tüm Türkçe harfleri evrensel karakter korumasına alıyoruz (Soru işaretlerini bitirir)
+      - name: Projedeki Tüm Bozuk Karakterleri Evrensel Kelimelerle Değiştir
         run: |
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x84Â±/ı/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x84Â\x9f/ğ/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x85Â\x9f/ş/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x84Â°/İ/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x84Â\x9e/Ğ/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x85Â\x9e/Ş/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â¼/ü/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â¶/ö/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â§/ç/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â\x96/Ö/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â\x9c/Ü/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â\x87/Ç/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x82Â//g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/İyi Akşamlar/Iyi Aksamlar/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/İyi Günler/Iyi Gunler/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/İyi Geceler/Iyi Geceler/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Günaydın/Gunaydin/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Sağlık/Saglik/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ölçüm/Olcum/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Yönetimi/Yonetimi/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/GÜVENLİ ÇIKIŞ/GUVENLI CIKIS/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Doktora Gönder/Doktora Gonder/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/İlaç/Ilac/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Özet/Ozet/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Tahlil/Tahlil/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Yükle/Yukle/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i "s/Ã¯Â½/ /g" {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i "s/Â¿/?/g" {} \; || true
 
       - run: flutter pub get
       
       - name: Android Altyapisini Sifirdan Olustur
         run: flutter create . --platforms android
 
-      # SİHİRLİ ADIM 2: Google API'ye erişimi engelleyen Android güvenlik kilidini (cleartextTraffic) devre dışı bırakır
-      - name: Android Internet Ağ Güvenlik Ağını Tamamen Serbest Bırak
+      - name: Android Internet İzinlerini ve SDK Ayarlarini Enjekte Et
         run: |
-          if [ -f android/app/src/main/AndroidManifest.xml ]; then
-            sed -i 's/<application/<application android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml
-            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
-            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"\/>' android/app/src/main/AndroidManifest.xml
-          fi
-          
           if [ -f android/app/build.gradle.kts ]; then
             sed -i 's/minSdk =.*/minSdk = 24/g' android/app/build.gradle.kts
             sed -i 's/compileSdk =.*/compileSdk = 36/g' android/app/build.gradle.kts
             sed -i 's/ndkVersion =.*/ndkVersion = "27.0.12077973"/g' android/app/build.gradle.kts
           fi
+          if [ -f android/app/build.gradle ]; then
+            sed -i 's/minSdkVersion.*/minSdkVersion 24/g' android/app/build.gradle
+            sed -i 's/compileSdkVersion.*/compileSdkVersion 36/g' android/app/build.gradle
+          fi
+          
+          sed -i '/<application/a \        android:usesCleartextTraffic="true"' android/app/src/main/AndroidManifest.xml
+          sed -i '/<manifest/a \    <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
+          sed -i '/<manifest/a \    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"\/>' android/app/src/main/AndroidManifest.xml
           
           echo "systemProp.file.encoding=UTF-8" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Dfile.encoding=UTF-8" >> android/gradle.properties
