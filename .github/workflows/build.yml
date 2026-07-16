@@ -45,8 +45,8 @@ jobs:
       - name: Android Altyapisini Sifirdan Olustur
         run: flutter create . --platforms android
 
-      # SİHİRLİ ADIM: Gradle motoruna ve Java derleyicisine her aşamada UTF-8 kodlama yapmasını zorunlu kılıyoruz
-      - name: Android SDK ve Gradle Ayarlarini Otomatik Yukselt
+      # SİHİRLİ ADIM: Hem internet izinlerini hem de tüm SDK ve UTF-8 ayarlarını otomatik enjekte eder
+      - name: Android Internet İzinlerini ve SDK Ayarlarini Enjekte Et
         run: |
           if [ -f android/app/build.gradle.kts ]; then
             sed -i 's/minSdk =.*/minSdk = 24/g' android/app/build.gradle.kts
@@ -58,13 +58,12 @@ jobs:
             sed -i 's/compileSdkVersion.*/compileSdkVersion 36/g' android/app/build.gradle
           fi
           
-          echo "systemProp.file.encoding=UTF-8" >> android/gradle.properties
-          echo "file.encoding=UTF-8" >> android/gradle.properties
+          # İnternet erişim iznini Android Manifest'in kalbine yerleştirir
+          sed -i '/<manifest/a \    <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
           
-          # Java ve Android derleme komutlarına küresel olarak UTF-8 emri enjekte ediliyor
-          if [ -f android/app/build.gradle ]; then
-            sed -i '/android {/a \    compileOptions { encoding "UTF-8" }' android/app/build.gradle
-          fi
+          # Java ve derleme motoruna evrensel UTF-8 emri verir
+          echo "systemProp.file.encoding=UTF-8" >> android/gradle.properties
+          echo "org.gradle.jvmargs=-Dfile.encoding=UTF-8" >> android/gradle.properties
 
       - run: flutter build apk --release --no-tree-shake-icons
       - name: APK'yi numarala
