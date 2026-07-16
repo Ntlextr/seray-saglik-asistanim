@@ -40,28 +40,47 @@ jobs:
           flutter-version: '3.32.0'
           channel: 'stable'
 
+      - name: Googleai_dart Kütüphanesini Arka Planda Güncelle
+        run: |
+          sed -i 's/googleai_dart:.*/googleai_dart: ^3.1.0/g' pubspec.yaml
+
+      # SİHİRLİ ADIM 1: Projedeki İSTİSNASIZ TÜM sayfaları (main.dart dahil) tarayıp bozuk harfleri gıcır gıcır Türkçe yapar
+      - name: Tüm Sayfalardaki Karakter Bozukluklarini Küresel Olarak Onar
+        run: |
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x84Â±/ı/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x84Â\x9f/ğ/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x85Â\x9f/ş/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x84Â°/İ/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x84Â\x9e/Ğ/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x85Â\x9e/Ş/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â¼/ü/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â¶/ö/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â§/ç/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â\x96/Ö/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â\x9c/Ü/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x83Â\x87/Ç/g' {} \; || true
+          find lib/ -name "*.dart" -type f -exec sed -i 's/Ã\x82Â//g' {} \; || true
+
       - run: flutter pub get
       
       - name: Android Altyapisini Sifirdan Olustur
         run: flutter create . --platforms android
 
-      # SİHİRLİ ADIM: Hem internet izinlerini hem de tüm SDK ve UTF-8 ayarlarını otomatik enjekte eder
-      - name: Android Internet İzinlerini ve SDK Ayarlarini Enjekte Et
+      # SİHİRLİ ADIM 2: Google API'ye erişimi engelleyen Android güvenlik kilidini (cleartextTraffic) devre dışı bırakır
+      - name: Android Internet Ağ Güvenlik Ağını Tamamen Serbest Bırak
         run: |
+          if [ -f android/app/src/main/AndroidManifest.xml ]; then
+            sed -i 's/<application/<application android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml
+            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
+            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"\/>' android/app/src/main/AndroidManifest.xml
+          fi
+          
           if [ -f android/app/build.gradle.kts ]; then
             sed -i 's/minSdk =.*/minSdk = 24/g' android/app/build.gradle.kts
             sed -i 's/compileSdk =.*/compileSdk = 36/g' android/app/build.gradle.kts
             sed -i 's/ndkVersion =.*/ndkVersion = "27.0.12077973"/g' android/app/build.gradle.kts
           fi
-          if [ -f android/app/build.gradle ]; then
-            sed -i 's/minSdkVersion.*/minSdkVersion 24/g' android/app/build.gradle
-            sed -i 's/compileSdkVersion.*/compileSdkVersion 36/g' android/app/build.gradle
-          fi
           
-          # İnternet erişim iznini Android Manifest'in kalbine yerleştirir
-          sed -i '/<manifest/a \    <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
-          
-          # Java ve derleme motoruna evrensel UTF-8 emri verir
           echo "systemProp.file.encoding=UTF-8" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Dfile.encoding=UTF-8" >> android/gradle.properties
 
