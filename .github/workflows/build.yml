@@ -19,7 +19,7 @@ jobs:
         channel: 'stable'
 
     - name: Eksik Platform Klasorlerini Olustur
-      run:  flutter create --project-name seray_saglik_asistanim . --overwrite
+      run: flutter create --project-name seray_saglik_asistanim . --overwrite
 
     - name: Zip'i Bul, Ac ve Kodlarin Uzerine Yaz
       run: |
@@ -28,6 +28,8 @@ jobs:
           echo "Bulunan zip: $ZIP_DOSYASI - aciliyor..."
           mkdir -p _acilan_zip
           unzip -o "$ZIP_DOSYASI" -d _acilan_zip
+          # flutter create .yaml'i sifirladigi icin gercek pubspec/lib/assets burada,
+          # create adimindan SONRA, tekrar uzerine yaziliyor.
           [ -d "_acilan_zip/lib" ] && rm -rf lib && cp -r _acilan_zip/lib lib
           [ -d "_acilan_zip/assets" ] && rm -rf assets && cp -r _acilan_zip/assets assets
           [ -f "_acilan_zip/pubspec.yaml" ] && cp _acilan_zip/pubspec.yaml pubspec.yaml
@@ -52,8 +54,10 @@ jobs:
         with open(yol, "r", encoding="utf-8") as f:
             icerik = f.read()
 
+        # Telefonda görünen uygulama adı
         icerik = re.sub(r'android:label="[^"]*"', 'android:label="SERAY SAĞLIK ASİSTANİM"', icerik)
 
+        # İlaç hatırlatma bildirimleri için gerekli izinler
         izinler = (
             '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n'
             '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n'
@@ -61,6 +65,7 @@ jobs:
         )
         icerik = icerik.replace('<application', izinler + '<application', 1)
 
+        # Zamanlanmış bildirimlerin çalışması ve telefon yeniden başlayınca hatırlamaların kaybolmaması için
         aliciler = (
             '        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />\n'
             '        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">\n'
@@ -77,6 +82,7 @@ jobs:
             f.write(icerik)
         print("AndroidManifest.xml güncellendi.")
 
+        # flutter_local_notifications paketi için "core library desugaring" zorunlu.
         import os
         gradle_yol = "android/app/build.gradle.kts" if os.path.exists("android/app/build.gradle.kts") else "android/app/build.gradle"
         kts = gradle_yol.endswith(".kts")
@@ -90,25 +96,26 @@ jobs:
                     r'\1\n        isCoreLibraryDesugaringEnabled = true',
                     gradle_icerik, count=1,
                 )
-                gradle_icerik = re.sub(
-                    r'(dependencies\s*\{)',
-                    r'\1\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")',
-                    gradle_icerik, count=1,
-                )
             else:
                 gradle_icerik = re.sub(
                     r'(compileOptions\s*\{)',
                     r'\1\n        coreLibraryDesugaringEnabled true',
                     gradle_icerik, count=1,
                 )
-                gradle_icerik = re.sub(
-                    r'(dependencies\s*\{)',
-                    r'\1\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"',
-                    gradle_icerik, count=1,
-                )
-            with open(gradle_yol, "w", encoding="utf-8") as f:
-                f.write(gradle_icerik)
-            print(f"{gradle_yol} güncellendi (core library desugaring açıldı).")
+
+        # desugar_jdk_libs bağımlılığını ekle (dependencies bloğu varsa içine, yoksa dosyanın sonuna yeni blok olarak)
+        if "desugar_jdk_libs" not in gradle_icerik:
+            desugar_satiri = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' if kts else 'coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"'
+            yeni_icerik = re.sub(r'(dependencies\s*\{)', r'\1\n    ' + desugar_satiri, gradle_icerik, count=1)
+            if yeni_icerik == gradle_icerik:
+                # dependencies { } bloğu bulunamadı, dosyanın sonuna yeni bir blok ekle
+                gradle_icerik += '\n\ndependencies {\n    ' + desugar_satiri + '\n}\n'
+            else:
+                gradle_icerik = yeni_icerik
+
+        with open(gradle_yol, "w", encoding="utf-8") as f:
+            f.write(gradle_icerik)
+        print(f"{gradle_yol} güncellendi (core library desugaring açıldı).")
         PYEOF
 
     - name: Bagimliliklari Yukle
