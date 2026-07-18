@@ -1,97 +1,135 @@
-name: Build APK
+name: Seray Saglik Tam Paket APK ve Kod Derleyici
+
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: GitHub Derleyici Sistem Dilini Turkce UTF-8 Olarak Zorunlu Kil
-        run: |
-          sudo locale-gen tr_TR.UTF-8
-          sudo update-locale LANG=tr_TR.UTF-8
-          echo "LANG=tr_TR.UTF-8" >> $GITHUB_ENV
-          echo "LC_ALL=tr_TR.UTF-8" >> $GITHUB_ENV
-          
-      - name: Zip'i bul, ac ve yapiyi duzelt
-        run: |
-          ZIP_DOSYASI=$(find . -maxdepth 1 -name "*.zip" | head -n 1)
-          if [ -n "$ZIP_DOSYASI" ]; then
-            echo "Bulunan zip: $ZIP_DOSYASI"
-            mkdir -p gecici_klasor
-            unzip -o "$ZIP_DOSYASI" -d gecici_klasor
-            if [ -f gecici_klasor/pubspec.yaml ]; then
-              KAYNAK="gecici_klasor"
-            else
-              KAYNAK=$(dirname "$(find gecici_klasor -maxdepth 3 -name pubspec.yaml | head -n 1)")
-            fi
-            echo "Bulunan proje klasoru: $KAYNAK"
-            cp -r "$KAYNAK"/. .
-          else
-            echo "UYARI: Repo icinde .zip dosyasi bulunamadi."
-          fi
+    - uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.32.0'
-          channel: 'stable'
+    - name: Zip'i Bul, Ac ve Kodlarin Uzerine Yaz
+      run: |
+        ZIP_DOSYASI=$(find . -maxdepth 1 -iname "*.zip" | head -n 1)
+        if [ -n "$ZIP_DOSYASI" ]; then
+          echo "Bulunan zip: $ZIP_DOSYASI - aciliyor..."
+          mkdir -p _acilan_zip
+          unzip -o "$ZIP_DOSYASI" -d _acilan_zip
+          [ -d "_acilan_zip/lib" ] && rm -rf lib && cp -r _acilan_zip/lib lib
+          [ -d "_acilan_zip/assets" ] && rm -rf assets && cp -r _acilan_zip/assets assets
+          [ -f "_acilan_zip/pubspec.yaml" ] && cp _acilan_zip/pubspec.yaml pubspec.yaml
+          [ -d "_acilan_zip/.github" ] && cp -r _acilan_zip/.github/. .github/
+          rm -rf _acilan_zip
+          echo "Kodlar zip icinden guncellendi."
+        else
+          echo "Repoda zip dosyasi bulunamadi, mevcut kodlarla devam ediliyor."
+        fi
 
-      # SİHİRLİ ADIM 1: Google paketini senin Flutter sürümünle %100 uyumlu kararlı eski sürüme çekiyoruz
-      - name: Googleai_dart Kütüphanesini Kararlı Sürüme Sabitle
-        run: |
-          sed -i 's/googleai_dart:.*/googleai_dart: ^2.1.0/g' pubspec.yaml
+    - name: Java Kurulumu
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
 
-      # SİHİRLİ ADIM 2: Hata veren tüm Türkçe harfleri evrensel karakter korumasına alıyoruz (Soru işaretlerini bitirir)
-      - name: Projedeki Tüm Bozuk Karakterleri Evrensel Kelimelerle Değiştir
-        run: |
-          find lib/ -name "*.dart" -type f -exec sed -i 's/İyi Akşamlar/Iyi Aksamlar/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/İyi Günler/Iyi Gunler/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/İyi Geceler/Iyi Geceler/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Günaydın/Gunaydin/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Sağlık/Saglik/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Ölçüm/Olcum/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Yönetimi/Yonetimi/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/GÜVENLİ ÇIKIŞ/GUVENLI CIKIS/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Doktora Gönder/Doktora Gonder/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/İlaç/Ilac/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Özet/Ozet/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Tahlil/Tahlil/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i 's/Yükle/Yukle/g' {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i "s/Ã¯Â½/ /g" {} \; || true
-          find lib/ -name "*.dart" -type f -exec sed -i "s/Â¿/?/g" {} \; || true
+    - name: Flutter Kurulumu
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
 
-      - run: flutter pub get
-      
-      - name: Android Altyapisini Sifirdan Olustur
-        run: flutter create . --platforms android
+    - name: Eksik Platform Klasorlerini Olustur
+      run: flutter create . --overwrite
 
-      - name: Android Internet İzinlerini ve SDK Ayarlarini Enjekte Et
-        run: |
-          if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/minSdk =.*/minSdk = 24/g' android/app/build.gradle.kts
-            sed -i 's/compileSdk =.*/compileSdk = 36/g' android/app/build.gradle.kts
-            sed -i 's/ndkVersion =.*/ndkVersion = "27.0.12077973"/g' android/app/build.gradle.kts
-          fi
-          if [ -f android/app/build.gradle ]; then
-            sed -i 's/minSdkVersion.*/minSdkVersion 24/g' android/app/build.gradle
-            sed -i 's/compileSdkVersion.*/compileSdkVersion 36/g' android/app/build.gradle
-          fi
-          
-          sed -i '/<application/a \        android:usesCleartextTraffic="true"' android/app/src/main/AndroidManifest.xml
-          sed -i '/<manifest/a \    <uses-permission android:name="android.permission.INTERNET"\/>' android/app/src/main/AndroidManifest.xml
-          sed -i '/<manifest/a \    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"\/>' android/app/src/main/AndroidManifest.xml
-          
-          echo "systemProp.file.encoding=UTF-8" >> android/gradle.properties
-          echo "org.gradle.jvmargs=-Dfile.encoding=UTF-8" >> android/gradle.properties
+    - name: Uygulama Adini ve Bildirim Izinlerini Ayarla
+      run: |
+        python3 << 'PYEOF'
+        import re
+        yol = "android/app/src/main/AndroidManifest.xml"
+        with open(yol, "r", encoding="utf-8") as f:
+            icerik = f.read()
 
-      - run: flutter build apk --release --no-tree-shake-icons
-      - name: APK'yi numarala
-        run: cp build/app/outputs/flutter-apk/app-release.apk seray-teknoloji-v${{ github.run_number }}.apk
-      - uses: actions/upload-artifact@v4
-        with:
-          name: seray-teknoloji-v${{ github.run_number }}
-          path: seray-teknoloji-v${{ github.run_number }}.apk
+        icerik = re.sub(r'android:label="[^"]*"', 'android:label="SERAY SAĞLIK ASİSTANİM"', icerik)
+
+        izinler = (
+            '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n'
+            '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n'
+            '    <uses-permission android:name="android.permission.CAMERA"/>\n'
+        )
+        icerik = icerik.replace('<application', izinler + '<application', 1)
+
+        aliciler = (
+            '        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />\n'
+            '        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">\n'
+            '            <intent-filter>\n'
+            '                <action android:name="android.intent.action.BOOT_COMPLETED"/>\n'
+            '                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>\n'
+            '                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>\n'
+            '            </intent-filter>\n'
+            '        </receiver>\n'
+        )
+        icerik = icerik.replace('</application>', aliciler + '    </application>', 1)
+
+        with open(yol, "w", encoding="utf-8") as f:
+            f.write(icerik)
+        print("AndroidManifest.xml güncellendi.")
+
+        import os
+        gradle_yol = "android/app/build.gradle.kts" if os.path.exists("android/app/build.gradle.kts") else "android/app/build.gradle"
+        kts = gradle_yol.endswith(".kts")
+        with open(gradle_yol, "r", encoding="utf-8") as f:
+            gradle_icerik = f.read()
+
+        if "isCoreLibraryDesugaringEnabled" not in gradle_icerik and "coreLibraryDesugaringEnabled" not in gradle_icerik:
+            if kts:
+                gradle_icerik = re.sub(
+                    r'(compileOptions\s*\{)',
+                    r'\1\n        isCoreLibraryDesugaringEnabled = true',
+                    gradle_icerik, count=1,
+                )
+                gradle_icerik = re.sub(
+                    r'(dependencies\s*\{)',
+                    r'\1\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")',
+                    gradle_icerik, count=1,
+                )
+            else:
+                gradle_icerik = re.sub(
+                    r'(compileOptions\s*\{)',
+                    r'\1\n        coreLibraryDesugaringEnabled true',
+                    gradle_icerik, count=1,
+                )
+                gradle_icerik = re.sub(
+                    r'(dependencies\s*\{)',
+                    r'\1\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"',
+                    gradle_icerik, count=1,
+                )
+            with open(gradle_yol, "w", encoding="utf-8") as f:
+                f.write(gradle_icerik)
+            print(f"{gradle_yol} güncellendi (core library desugaring açıldı).")
+        PYEOF
+
+    - name: Bagimliliklari Yukle
+      run: flutter pub get
+
+    - name: Uygulama Ikonlarini Olustur
+      run: flutter pub run flutter_launcher_icons
+
+    - name: APK Derle (Release Surumu)
+      run: flutter build apk --release
+
+    - name: Hem APK Hem Tum Kaynak Kodlari Tek Bir ZIP Paketi Yap
+      run: |
+        VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' ' | tr -d '\r')
+        SUPER_ZIP_NAME="seray_saglik_HEPS_ICINDE_v${VERSION}.zip"
+        cp build/app/outputs/flutter-apk/app-release.apk "./seray_saglik_asistanim_v${VERSION}.apk"
+        zip -r "${SUPER_ZIP_NAME}" "./seray_saglik_asistanim_v${VERSION}.apk" lib assets pubspec.yaml .github
+        echo "SUPER_ZIP=${SUPER_ZIP_NAME}" >> $GITHUB_ENV
+
+    - name: 🎁 TEK PAKETTE (APK + KAYNAK KODLAR) TESLIM ET
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.SUPER_ZIP }}
+        path: ${{ env.SUPER_ZIP }}
