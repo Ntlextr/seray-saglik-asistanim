@@ -19,7 +19,7 @@ jobs:
         channel: 'stable'
 
     - name: Eksik Platform Klasorlerini Olustur
-      run: (flutter create --project-name seray_saglik_asistanim . --overwrite
+      run:  flutter create --project-name seray_saglik_asistanim . --overwrite
 
     - name: Zip'i Bul, Ac ve Kodlarin Uzerine Yaz
       run: |
