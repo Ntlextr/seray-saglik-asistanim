@@ -13,6 +13,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Flutter Kurulumu
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
+    - name: Eksik Platform Klasorlerini Olustur
+      run: flutter create . --overwrite
+
     - name: Zip'i Bul, Ac ve Kodlarin Uzerine Yaz
       run: |
         ZIP_DOSYASI=$(find . -maxdepth 1 -iname "*.zip" | head -n 1)
@@ -35,14 +43,6 @@ jobs:
       with:
         distribution: 'zulu'
         java-version: '17'
-
-    - name: Flutter Kurulumu
-      uses: subosito/flutter-action@v2
-      with:
-        channel: 'stable'
-
-    - name: Eksik Platform Klasorlerini Olustur
-      run: flutter create . --overwrite
 
     - name: Uygulama Adini ve Bildirim Izinlerini Ayarla
       run: |
