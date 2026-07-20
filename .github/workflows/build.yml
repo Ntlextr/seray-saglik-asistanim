@@ -32,11 +32,10 @@ jobs:
           unzip -q seray_saglikv1.46.zip -d ham_ayiklama
           echo "ZIP başarıyla açıldı, dizin yapısı düzeltiliyor..."
           
-          # Zip içinden ekstra bir klasör çıktıysa veya doğrudan dosyalar geldiyse algıla
           if [ -f "ham_ayiklama/pubspec.yaml" ]; then
             mv ham_ayiklama proje_klasoru
           else
-            mv ham_ayiklama/* proje_klasoru
+            mv ham_ayiklama/* proje_klasoru/ 2>/dev/null || mv ham_ayiklama proje_klasoru
           fi
           
           echo "Güncel proje dizini:"
@@ -51,6 +50,21 @@ jobs:
         mkdir -p proje_klasoru/android/app
         echo "ZGVmYXVsdENvbmZpZyB7CiAgICBhcHBsaWNhdGlvbklkICJ7YXBwbGljYXRpb25JZH0iCiAgICBtaW5TZGtWZXJzaW9uIDIzCiAgICB0YXJnZXRTZGtWZXJzaW9uIDM2CiAgICB2ZXJzaW9uQ29kZSBmbHV0dGVyLnZlcnNpb25Db2RlCiAgICB2ZXJzaW9uTmFtZSBmbHV0dGVyLnZlcnNpb25OYW1lCn0KCmJ1aWxkVHlwZXMgewogICAgcmVsZWFzZSB7CiAgICAgICAgc2lnbmluZ0NvbmZpZyBzaWduaW5nQ29uZmlncy5kZWJ1ZwogICAgfQp9CgpmbHV0dGVyIHsKICAgIHNvdXJjZSAnLi4vLi4nCn0KCmRlcGVuZGVuY2llcyB7CiAgICBjb3JlTGlicmFyeURlc3VnYXJpbmcgImNvbS5hbmRyb2lkLnRvb2xzOmRlc3VnYXJfamRrX2xpYnM6Mi4xLjQiCn0=" | base64 -d > proje_klasoru/android/app/build.gradle
         echo "android/app/build.gradle dosyası oluşturuldu."
+
+    - name: Android v2 Embedding Dönüşümü Yap
+      run: |
+        echo "MainActivity dosyaları aranıyor ve v2 embedding yapısına dönüştürülüyor..."
+        find proje_klasoru/android/app/src/main -name "MainActivity.kt" -o -name "MainActivity.java" | while read -r dosya; do
+          if [[ "$dosya" == *.kt ]]; then
+            echo "Kotlin dosyası güncelleniyor: $dosya"
+            package_name=$(grep "package" "$dosya" | head -n 1)
+            echo -e "$package_name\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity() {\n}" > "$dosya"
+          elif [[ "$dosya" == *.java ]]; then
+            echo "Java dosyası güncelleniyor: $dosya"
+            package_name=$(grep "package" "$dosya" | head -n 1)
+            echo -e "$package_name\n\nimport io.flutter.embedding.android.FlutterActivity;\n\npublic class MainActivity extends FlutterActivity {\n}" > "$dosya"
+          fi
+        done
 
     - name: KONTROL Manifest Icerigini Goster
       run: |
@@ -91,3 +105,4 @@ jobs:
       with:
         name: seray_saglik_derleme_sonucu
         path: ${{ env.SUPER_ZIP }}
+        
