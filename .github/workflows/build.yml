@@ -35,6 +35,6 @@ jobs:
     - name: 🎁 TEK PAKETTE (APK + KAYNAK KODLAR) TESLIM ET
       uses: actions/upload-artifact@v4
       with:
-        name: seray_saglik_derleme_sonucu
+        name: akilli_saglik_derleme_sonucu
         path: "*.zip"
         
