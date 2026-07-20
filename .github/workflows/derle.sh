@@ -22,18 +22,18 @@ echo "=== 2. Modern ve Sıfır Bir Proje Üretiliyor ==="
 flutter create --platforms=android Akilli_Sağlik_Asistanim
 
 echo "=== 3. Tüm Kaynak Kodlar ve Assets Eksiksiz Aktarılıyor ==="
-rm -rf Akilli_Sağlik_Asistanim/lib Akilli_Sağlik_Asistanim/pubspec.yaml
-cp -r projem/lib Akilli_Sağlik_Asistanim/
-cp projem/pubspec.yaml Akilli_Sağlik_Asistanim/
+rm -rf Akilli_Saglik_Asistanim/lib Akilli_Saglik_Asistanim/pubspec.yaml
+cp -r projem/lib Akilli_Saglik_Asistanim/
+cp projem/pubspec.yaml Akilli_Saglik_Asistanim/
 
 # Son ekran görüntüsündeki fontlar ve tüm assets klasörü buradaki komutla yeni projeye aktarılıyor
 if [ -d "projem/assets" ]; then
-    cp -r projem/assets Akilli_Sağlik_Asistanim/
+    cp -r projem/assets Akilli_Saglik_Asistanim/
     echo "Assets klasörü başarıyla yeni projeye enjekte edildi."
 fi
 
 echo "=== 4. Modern Gradle Ayarları Yapılandırılıyor ==="
-cat << 'EOF' > Akıllı_Sağlik_Asistanim/android/app/build.gradle
+cat << 'EOF' > Akilli_Saglik_Asistanim/android/app/build.gradle
 plugins {
     id "com.android.application"
     id "kotlin-android"
