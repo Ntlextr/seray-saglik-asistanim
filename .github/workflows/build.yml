@@ -146,50 +146,7 @@ jobs:
             import base64
             sablon_b64 = "ZGVmIGxvY2FsUHJvcGVydGllcyA9IG5ldyBQcm9wZXJ0aWVzKCkKZGVmIGxvY2FsUHJvcGVydGllc0ZpbGUgPSByb290UHJvamVjdC5maWxlKCdsb2NhbC5wcm9wZXJ0aWVzJykKaWYgKGxvY2FsUHJvcGVydGllc0ZpbGUuZXhpc3RzKCkpIHsKICAgIGxvY2FsUHJvcGVydGllc0ZpbGUud2l0aFJlYWRlcignVVRGLTgnKSB7IHJlYWRlciAtPiBsb2NhbFByb3BlcnRpZXMubG9hZChyZWFkZXIpIH0KfQoKYXBwbHkgcGx1Z2luOiAiY29tLmFuZHJvaWQuYXBwbGljYXRpb24iCmFwcGx5IHBsdWdpbjogImtvdGxpbi1hbmRyb2lkIgphcHBseSBwbHVnaW46ICJkZXYuZmx1dHRlci5mbHV0dGVyLWdyYWRsZS1wbHVnaW4iCgphbmRyb2lkIHsKICAgIG5hbWVzcGFjZSAiX19OQU1FU1BBQ0VfXyIKICAgIGNvbXBpbGVTZGsgMzYKICAgIG5ka1ZlcnNpb24gZmx1dHRlci5uZGtWZXJzaW9uCgogICAgY29tcGlsZU9wdGlvbnMgewogICAgICAgIGNvcmVMaWJyYXJ5RGVzdWdhcmluZ0VuYWJsZWQgdHJ1ZQogICAgICAgIHNvdXJjZUNvbXBhdGliaWxpdHkgSmF2YVZlcnNpb24uVkVSU0lPTl8xNwogICAgICAgIHRhcmdldENvbXBhdGliaWxpdHkgSmF2YVZlcnNpb24uVkVSU0lPTl8xNwogICAgfQoKICAgIGtvdGxpbk9wdGlvbnMgewogICAgICAgIGp2bVRhcmdldCA9ICIxNyIKICAgIH0KCiAgICBkZWZhdWx0Q29uZmlnIHsKICAgICAgICBhcHBsaWNhdGlvbklkICJfX0FQUExJQ0FUSU9OSURfXyIKICAgICAgICBtaW5TZGtWZXJzaW9uIDIzCiAgICAgICAgdGFyZ2V0U2RrVmVyc2lvbiAzNgogICAgICAgIHZlcnNpb25Db2RlIGZsdXR0ZXIudmVyc2lvbkNvZGUKICAgICAgICB2ZXJzaW9uTmFtZSBmbHV0dGVyLnZlcnNpb25OYW1lCiAgICB9CgogICAgYnVpbGRUeXBlcyB7CiAgICAgICAgcmVsZWFzZSB7CiAgICAgICAgICAgIHNpZ25pbmdDb25maWcgc2lnbmluZ0NvbmZpZ3MuZGVidWcKICAgICAgICB9CiAgICB9Cn0KCmZsdXR0ZXIgewogICAgc291cmNlICcuLi8uLicKfQoKZGVwZW5kZW5jaWVzIHsKICAgIGNvcmVMaWJyYXJ5RGVzdWdhcmluZyAiY29tLmFuZHJvaWQudG9vbHM6ZGVzdWdhcl9qZGtfbGliczoyLjEuNCIKfQo="
             yeni_gradle = base64.b64decode(sablon_b64).decode("utf-8").replace("__NAMESPACE__", namespace).replace("__APPLICATIONID__", applicationId)
-}}
 
-apply plugin: "com.android.application"
-apply plugin: "kotlin-android"
-apply plugin: "dev.flutter.flutter-gradle-plugin"
-
-android {{
-    namespace "{namespace}"
-    compileSdk 36
-    ndkVersion flutter.ndkVersion
-
-    compileOptions {{
-        coreLibraryDesugaringEnabled true
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }}
-
-    kotlinOptions {{
-        jvmTarget = "17"
-    }}
-
-    defaultConfig {{
-        applicationId "{applicationId}"
-        minSdkVersion 23
-        targetSdkVersion 36
-        versionCode flutter.versionCode
-        versionName flutter.versionName
-    }}
-
-    buildTypes {{
-        release {{
-            signingConfig signingConfigs.debug
-        }}
-    }}
-}}
-
-flutter {{
-    source '../..'
-}}
-
-dependencies {{
-    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
-}}
-'''
         with open(gradle_yol, "w", encoding="utf-8") as f:
             f.write(yeni_gradle)
         print(f"{gradle_yol} komple, garantili icerikle yeniden yazildi (compileSdk 36).")
