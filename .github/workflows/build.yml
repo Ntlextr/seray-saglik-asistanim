@@ -27,31 +27,9 @@ jobs:
 
     - name: Android build.gradle Güncelle
       run: |
-        cat << 'EOF' > android/app/build.gradle
-    defaultConfig {
-        applicationId "{applicationId}"
-        minSdkVersion 23
-        targetSdkVersion 36
-        versionCode flutter.versionCode
-        versionName flutter.versionName
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.debug
-        }
-    }
-}
-
-flutter {
-    source '../..'
-}
-
-dependencies {
-    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
-}
-EOF
-        echo "android/app/build.gradle komple, garantili icerikle yeniden yazildi (compileSdk 36)."
+        mkdir -p android/app
+        echo "ZGVmYXVsdENvbmZpZyB7CiAgICBhcHBsaWNhdGlvbklkICJ7YXBwbGljYXRpb25JZH0iCiAgICBtaW5TZGtWZXJzaW9uIDIzCiAgICB0YXJnZXRTZGtWZXJzaW9uIDM2CiAgICB2ZXJzaW9uQ29kZSBmbHV0dGVyLnZlcnNpb25Db2RlCiAgICB2ZXJzaW9uTmFtZSBmbHV0dGVyLnZlcnNpb25OYW1lCn0KCmJ1aWxkVHlwZXMgewogICAgcmVsZWFzZSB7CiAgICAgICAgc2lnbmluZ0NvbmZpZyBzaWduaW5nQ29uZmlncy5kZWJ1ZwogICAgfQp9CgpmbHV0dGVyIHsKICAgIHNvdXJjZSAnLi4vLi4nCn0KCmRlcGVuZGVuY2llcyB7CiAgICBjb3JlTGlicmFyeURlc3VnYXJpbmcgImNvbS5hbmRyb2lkLnRvb2xzOmRlc3VnYXJfamRrX2xpYnM6Mi4xLjQiCn0=" | base64 -d > android/app/build.gradle
+        echo "android/app/build.gradle dosyası güvenli şekilde oluşturuldu!"
 
     - name: KONTROL Manifest Icerigini Goster
       run: |
