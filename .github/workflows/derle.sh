@@ -19,7 +19,7 @@ else
 fi
 
 echo "=== 2. Modern ve Sıfır Bir Proje Üretiliyor ==="
-flutter create --platforms=android Akilli_Sağlik_Asistanim
+flutter create --platforms=android Akilli_Saglik_Asistanim
 
 echo "=== 3. Tüm Kaynak Kodlar ve Assets Eksiksiz Aktarılıyor ==="
 rm -rf Akilli_Saglik_Asistanim/lib Akilli_Saglik_Asistanim/pubspec.yaml
