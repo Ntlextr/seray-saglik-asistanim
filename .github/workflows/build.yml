@@ -66,6 +66,18 @@ jobs:
           fi
         done
 
+    - name: AndroidManifest.xml v1 Kalıntılarını Temizle
+      run: |
+        echo "AndroidManifest.xml temizliği başlatılıyor..."
+        find proje_klasoru/android -name "AndroidManifest.xml" | while read -r manifest; do
+          echo "Düzenlenen dosya: $manifest"
+          # Eski v1 embedding meta-data satırlarını tamamen kaldırır
+          sed -i '/android:name="io.flutter.app.FlutterApplication"/d' "$manifest"
+          sed -i '/android:name="io.flutter.embedding.android.SplashScreenDrawable"/d' "$manifest"
+          # Dokümantasyona göre eski name tanımlarını temizleyip normalleştirir
+          sed -i 's/android:name="io.flutter.app.FlutterActivity"/android:name="io.flutter.embedding.android.FlutterActivity"/g' "$manifest"
+        done
+
     - name: KONTROL Manifest Icerigini Goster
       run: |
         echo "----- AndroidManifest.xml (izinler) -----"
