@@ -7,10 +7,10 @@ if [ -f "seray_saglikv1.46.zip" ]; then
     unzip -q seray_saglikv1.46.zip -d ham_ayiklama
     
     if [ -f "ham_ayiklama/pubspec.yaml" ]; then
-        mv ham_ayiklama proje_klasoru
+        mv ham_ayiklama projem
     else
-        mkdir -p proje_klasoru
-        mv ham_ayiklama/* proje_klasoru/ 2>/dev/null || mv ham_ayiklama proje_klasoru
+        mkdir -p projem
+        mv ham_ayiklama/* projem/ 2>/dev/null || mv ham_ayiklama projem
     fi
     echo "Kaynak dosyalar başarıyla ayıklandı."
 else
@@ -23,14 +23,14 @@ flutter create --platforms=android yeni_temiz_proje
 
 echo "=== 3. Kaynak Kodlar Yeni Yapıya Aktarılıyor ==="
 rm -rf yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml
-cp -r  proje_klasoru/lib yeni_temiz_proje/
-cp proje_klasoru/pubspec.yaml yeni_temiz_proje/
+cp -r projem/lib yeni_temiz_proje/
+cp projem/pubspec.yaml yeni_temiz_proje/
 
-if [ -d "proje_klasoru/assets" ]; then
-    cp -r  proje_klasoru/assets yeni_temiz_proje/
+if [ -d "projem/assets" ]; then
+    cp -r projem/assets yeni_temiz_proje/
 fi
 
-echo "=== 4. Modern Gradle Ayarları ve Desugaring Yapılandırılıyor ==="
+echo "=== 4. Modern Gradle Ayarları Yapılandırılıyor ==="
 cat << 'EOF' > yeni_temiz_proje/android/app/build.gradle
 plugins {
     id "com.android.application"
@@ -43,7 +43,6 @@ android {
     compileSdk 36
 
     compileOptions {
-        // Desugaring kütüphanesinin Java 8 ve üzeri özellikleri kullanmasını sağlıyoruz
         coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -55,7 +54,6 @@ android {
         targetSdkVersion 36
         versionCode 1
         versionName "1.0.0"
-        // MultiDex ve geriye dönük kütüphane desteğini burada da açıyoruz
         multiDexEnabled true
     }
 
@@ -71,7 +69,7 @@ dependencies {
 }
 EOF
 
-echo "=== 5. Bağımlılıklar Yükleniyor ve APK Derleniyor ==="
+echo "=== 5. Bağımlılıkler Yükleniyor ve APK Derleniyor ==="
 cd yeni_temiz_proje
 flutter pub get
 flutter build apk --release
@@ -83,4 +81,3 @@ cp build/app/outputs/flutter-apk/app-release.apk "../seray_saglik_asistanim_v${V
 cd ..
 zip -r "${SUPER_ZIP_NAME}" "./seray_saglik_asistanim_v${VERSION}.apk" yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml .github
 echo "İşlem tamamlandı, paket hazır: ${SUPER_ZIP_NAME}"
-feg
