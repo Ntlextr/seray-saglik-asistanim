@@ -2,9 +2,9 @@
 set -e
 
 echo "=== 1. Proje ZIP Dosyası Ayıklanıyor ==="
-if [ -f "seray_saglikv1.47.zip" ]; then
+if [ -f "seray_saglikv147.zip" ]; then
     mkdir -p ham_ayiklama
-    unzip -q seray_saglikv1.47.zip -d ham_ayiklama
+    unzip -q seray_saglikv147.zip -d ham_ayiklama
     
     if [ -f "ham_ayiklama/pubspec.yaml" ]; then
         mv ham_ayiklama projem
@@ -14,7 +14,7 @@ if [ -f "seray_saglikv1.47.zip" ]; then
     fi
     echo "Kaynak dosyalar başarıyla ayıklandı."
 else
-    echo "HATA: seray_saglikv1.47.zip bulunamadı!"
+    echo "HATA: seray_saglikv147.zip bulunamadı!"
     exit 1
 fi
 
