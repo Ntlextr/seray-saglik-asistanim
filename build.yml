@@ -1,0 +1,270 @@
+name: Seray Saglik Tam Paket APK ve Kod Derleyici
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Flutter Kurulumu
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
+    - name: Eksik Platform Klasorlerini Olustur
+      run: flutter create --project-name seray_saglik_asistanim . --overwrite
+
+    - name: Zip'i Bul, Ac ve Kodlarin Uzerine Yaz
+      run: |
+        # Not: git checkout tum dosyalarin degisim tarihini ayni ana esitler,
+        # o yuzden dosya sistemi tarihi yerine git commit gecmisine bakiyoruz.
+        ZIP_DOSYASI=""
+        EN_YENI_TARIH=0
+        for aday in $(find . -maxdepth 1 -iname "*.zip"); do
+          tarih=$(git log -1 --format=%ct -- "$aday" 2>/dev/null || echo 0)
+          if [ "$tarih" -ge "$EN_YENI_TARIH" ]; then
+            EN_YENI_TARIH=$tarih
+            ZIP_DOSYASI=$aday
+          fi
+        done
+        if [ -n "$ZIP_DOSYASI" ]; then
+          echo "Birden fazla zip olabilir, en son commit edilen seciliyor: $ZIP_DOSYASI"
+        fi
+        if [ -n "$ZIP_DOSYASI" ]; then
+          echo "Bulunan zip: $ZIP_DOSYASI - aciliyor..."
+          mkdir -p _acilan_zip
+          unzip -o "$ZIP_DOSYASI" -d _acilan_zip
+          # flutter create .yaml'i sifirladigi icin gercek pubspec/lib/assets burada,
+          # create adimindan SONRA, tekrar uzerine yaziliyor.
+          [ -d "_acilan_zip/lib" ] && rm -rf lib && cp -r _acilan_zip/lib lib
+          [ -d "_acilan_zip/assets" ] && rm -rf assets && cp -r _acilan_zip/assets assets
+          [ -f "_acilan_zip/pubspec.yaml" ] && cp _acilan_zip/pubspec.yaml pubspec.yaml
+          [ -d "_acilan_zip/.github" ] && cp -r _acilan_zip/.github/. .github/
+          rm -rf _acilan_zip
+          echo "Kodlar zip icinden guncellendi."
+        else
+          echo "Repoda zip dosyasi bulunamadi, mevcut kodlarla devam ediliyor."
+        fi
+
+    - name: Java Kurulumu
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Uygulama Adini ve Bildirim Izinlerini Ayarla
+      run: |
+        python3 << 'PYEOF'
+        import re
+        yol = "android/app/src/main/AndroidManifest.xml"
+        with open(yol, "r", encoding="utf-8") as f:
+            icerik = f.read()
+
+        # Telefonda görünen uygulama adı
+        icerik = re.sub(r'android:label="[^"]*"', 'android:label="SERAY SAĞLIK ASİSTANİM"', icerik)
+
+        # İlaç hatırlatma bildirimleri için gerekli izinler
+        izinler = (
+            '    <uses-permission android:name="android.permission.INTERNET"/>\n'
+            '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n'
+            '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n'
+            '    <uses-permission android:name="android.permission.CAMERA"/>\n'
+        )
+        icerik = icerik.replace('<application', izinler + '<application', 1)
+
+        # Zamanlanmış bildirimlerin çalışması ve telefon yeniden başlayınca hatırlamaların kaybolmaması için
+        aliciler = (
+            '        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />\n'
+            '        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">\n'
+            '            <intent-filter>\n'
+            '                <action android:name="android.intent.action.BOOT_COMPLETED"/>\n'
+            '                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>\n'
+            '                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>\n'
+            '            </intent-filter>\n'
+            '        </receiver>\n'
+        )
+        icerik = icerik.replace('</application>', aliciler + '    </application>', 1)
+
+        with open(yol, "w", encoding="utf-8") as f:
+            f.write(icerik)
+        print("AndroidManifest.xml güncellendi.")
+
+        # flutter_local_notifications paketi için "core library desugaring" zorunlu.
+        import os
+        gradle_yol = "android/app/build.gradle.kts" if os.path.exists("android/app/build.gradle.kts") else "android/app/build.gradle"
+        kts = gradle_yol.endswith(".kts")
+        with open(gradle_yol, "r", encoding="utf-8") as f:
+            gradle_icerik = f.read()
+
+        if "isCoreLibraryDesugaringEnabled" not in gradle_icerik and "coreLibraryDesugaringEnabled" not in gradle_icerik:
+            if kts:
+                gradle_icerik = re.sub(
+                    r'(compileOptions\s*\{)',
+                    r'\1\n        isCoreLibraryDesugaringEnabled = true',
+                    gradle_icerik, count=1,
+                )
+            else:
+                gradle_icerik = re.sub(
+                    r'(compileOptions\s*\{)',
+                    r'\1\n        coreLibraryDesugaringEnabled true',
+                    gradle_icerik, count=1,
+                )
+
+        # desugar_jdk_libs bağımlılığını ekle (dependencies bloğu varsa içine, yoksa dosyanın sonuna yeni blok olarak)
+        if "desugar_jdk_libs" not in gradle_icerik:
+            desugar_satiri = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' if kts else 'coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"'
+            yeni_icerik = re.sub(r'(dependencies\s*\{)', r'\1\n    ' + desugar_satiri, gradle_icerik, count=1)
+            if yeni_icerik == gradle_icerik:
+                # dependencies { } bloğu bulunamadı, dosyanın sonuna yeni bir blok ekle
+                gradle_icerik += '\n\ndependencies {\n    ' + desugar_satiri + '\n}\n'
+            else:
+                gradle_icerik = yeni_icerik
+
+        with open(gradle_yol, "w", encoding="utf-8") as f:
+            f.write(gradle_icerik)
+        print(f"{gradle_yol} güncellendi (core library desugaring açıldı).")
+
+        # ---- compileSdk sorunu defalarca regex ile tutmadigi icin, dosyayi
+        # ---- garantili, bilinen dogru bir icerikle komple yeniden yaziyoruz.
+        namespace_bul = re.search(r'namespace\s*=?\s*"([^"]+)"', gradle_icerik)
+        namespace = namespace_bul.group(1) if namespace_bul else "com.example.seray_saglik_asistanim"
+        applicationId_bul = re.search(r'applicationId\s*=?\s*"([^"]+)"', gradle_icerik)
+        applicationId = applicationId_bul.group(1) if applicationId_bul else namespace
+
+        if kts:
+            yeni_gradle = f'''plugins {{
+    id("com.android.application")
+    id("kotlin-android")
+    id("dev.flutter.flutter-gradle-plugin")
+}}
+
+android {{
+    namespace = "{namespace}"
+    compileSdk = 36
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {{
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }}
+
+    kotlinOptions {{
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }}
+
+    defaultConfig {{
+        applicationId = "{applicationId}"
+        minSdk = 23
+        targetSdk = 36
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }}
+
+    buildTypes {{
+        release {{
+            signingConfig = signingConfigs.getByName("debug")
+        }}
+    }}
+}}
+
+flutter {{
+    source = "../.."
+}}
+
+dependencies {{
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}}
+'''
+        else:
+            yeni_gradle = f'''def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {{
+    localPropertiesFile.withReader('UTF-8') {{ reader -> localProperties.load(reader) }}
+}}
+
+apply plugin: "com.android.application"
+apply plugin: "kotlin-android"
+apply plugin: "dev.flutter.flutter-gradle-plugin"
+
+android {{
+    namespace "{namespace}"
+    compileSdk 36
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {{
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }}
+
+    kotlinOptions {{
+        jvmTarget = "17"
+    }}
+
+    defaultConfig {{
+        applicationId "{applicationId}"
+        minSdkVersion 23
+        targetSdkVersion 36
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+    }}
+
+    buildTypes {{
+        release {{
+            signingConfig signingConfigs.debug
+        }}
+    }}
+}}
+
+flutter {{
+    source '../..'
+}}
+
+dependencies {{
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
+}}
+'''
+        with open(gradle_yol, "w", encoding="utf-8") as f:
+            f.write(yeni_gradle)
+        print(f"{gradle_yol} komple, garantili icerikle yeniden yazildi (compileSdk 36).")
+        PYEOF
+
+    - name: KONTROL Manifest Icerigini Goster
+      run: |
+        echo "----- AndroidManifest.xml (izinler) -----"
+        grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "HIC IZIN BULUNAMADI!"
+        echo "------------------------------------------"
+
+    - name: Bagimliliklari Yukle
+      run: flutter pub get
+
+    - name: Uygulama Ikonlarini Olustur
+      run: flutter pub run flutter_launcher_icons
+
+    - name: Acilis Ekranini (Splash) Olustur
+      run: flutter pub run flutter_native_splash:create
+
+    - name: APK Derle (Release Surumu)
+      run: flutter build apk --release
+
+    - name: Hem APK Hem Tum Kaynak Kodlari Tek Bir ZIP Paketi Yap
+      run: |
+        VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' ' | tr -d '\r')
+        SUPER_ZIP_NAME="seray_saglik_HEPS_ICINDE_v${VERSION}.zip"
+        cp build/app/outputs/flutter-apk/app-release.apk "./seray_saglik_asistanim_v${VERSION}.apk"
+        zip -r "${SUPER_ZIP_NAME}" "./seray_saglik_asistanim_v${VERSION}.apk" lib assets pubspec.yaml .github android
+        echo "SUPER_ZIP=${SUPER_ZIP_NAME}" >> $GITHUB_ENV
+
+    - name: 🎁 TEK PAKETTE (APK + KAYNAK KODLAR) TESLIM ET
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.SUPER_ZIP }}
+        path: ${{ env.SUPER_ZIP }}
