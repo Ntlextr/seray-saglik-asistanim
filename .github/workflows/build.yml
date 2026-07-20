@@ -1,9 +1,40 @@
+name: Flutter Build APK
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Depoyu Klonla (Checkout)
+      uses: actions/checkout@v4
+
+    - name: Java JDK Kurulumu
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Flutter Kurulumu
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
+    - name: Python Kurulumu
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
     - name: Android build.gradle Güncelle
       run: |
         python3 - << 'PYEOF'
         import os
 
-        # Gradle dosya yolunu kontrol edin
         gradle_yol = "android/app/build.gradle" 
 
         yeni_gradle = """
