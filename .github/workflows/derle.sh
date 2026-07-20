@@ -19,19 +19,21 @@ else
 fi
 
 echo "=== 2. Modern ve Sıfır Bir Proje Üretiliyor ==="
-flutter create --platforms=android yeni_temiz_proje
+flutter create --platforms=android Akıllı_Sağlik_Asistanım
 
-echo "=== 3. Kaynak Kodlar Yeni Yapıya Aktarılıyor ==="
-rm -rf yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml
-cp -r projem/lib yeni_temiz_proje/
-cp projem/pubspec.yaml yeni_temiz_proje/
+echo "=== 3. Tüm Kaynak Kodlar ve Assets Eksiksiz Aktarılıyor ==="
+rm -rf Akıllı_Sağlik_Asistanım/lib Akıllı_Sağlik_Asistanım/pubspec.yaml
+cp -r projem/lib Akıllı_Sağlik_Asistanım/
+cp projem/pubspec.yaml Akıllı_Sağlik_Asistanım/
 
+# Son ekran görüntüsündeki fontlar ve tüm assets klasörü buradaki komutla yeni projeye aktarılıyor
 if [ -d "projem/assets" ]; then
-    cp -r projem/assets yeni_temiz_proje/
+    cp -r projem/assets Akıllı_Sağlik_Asistanım/
+    echo "Assets klasörü başarıyla yeni projeye enjekte edildi."
 fi
 
 echo "=== 4. Modern Gradle Ayarları Yapılandırılıyor ==="
-cat << 'EOF' > yeni_temiz_proje/android/app/build.gradle
+cat << 'EOF' > Akıllı_Sağlik_Asistanım/android/app/build.gradle
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -69,15 +71,19 @@ dependencies {
 }
 EOF
 
-echo "=== 5. Bağımlılıkler Yükleniyor ve APK Derleniyor ==="
-cd yeni_temiz_proje
+echo "=== 5. Bağımlılıklar Yükleniyor ve APK Derleniyor ==="
+cd Akıllı_Sağlik_Asistanım
 flutter pub get
 flutter build apk --release
 
-echo "=== 6. Son Paketleme İşlemleri Yapılıyor ==="
+echo "=== 6. Tüm Projeyi ve APK'yı Eksiksiz ZIP Paketine Alıyor ==="
 VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' ' | tr -d '\r')
 SUPER_ZIP_NAME="seray_saglik_HEPS_ICINDE_v${VERSION}.zip"
+
+# APK dosyasını ana dizine çıkartıyoruz
 cp build/app/outputs/flutter-apk/app-release.apk "../seray_saglik_asistanim_v${VERSION}.apk"
 cd ..
-zip -r "${SUPER_ZIP_NAME}" "./seray_saglik_asistanim_v${VERSION}.apk" yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml .github
-echo "İşlem tamamlandı, paket hazır: ${SUPER_ZIP_NAME}"
+
+# ZIP paketinin içine yeni temiz projenin tüm içeriğini (android altyapısı dahil) eksiksiz koyuyoruz
+zip -r "${SUPER_ZIP_NAME}" "./seray_saglik_asistanim_v${VERSION}.apk" Akıllı_Sağlik_Asistanım .github
+echo "İşlem başarıyla bitti, tam paket hazır: ${SUPER_ZIP_NAME}"
