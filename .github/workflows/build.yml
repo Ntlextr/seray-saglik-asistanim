@@ -51,31 +51,30 @@ jobs:
         echo "ZGVmYXVsdENvbmZpZyB7CiAgICBhcHBsaWNhdGlvbklkICJ7YXBwbGljYXRpb25JZH0iCiAgICBtaW5TZGtWZXJzaW9uIDIzCiAgICB0YXJnZXRTZGtWZXJzaW9uIDM2CiAgICB2ZXJzaW9uQ29kZSBmbHV0dGVyLnZlcnNpb25Db2RlCiAgICB2ZXJzaW9uTmFtZSBmbHV0dGVyLnZlcnNpb25OYW1lCn0KCmJ1aWxkVHlwZXMgewogICAgcmVsZWFzZSB7CiAgICAgICAgc2lnbmluZ0NvbmZpZyBzaWduaW5nQ29uZmlncy5kZWJ1ZwogICAgfQp9CgpmbHV0dGVyIHsKICAgIHNvdXJjZSAnLi4vLi4nCn0KCmRlcGVuZGVuY2llcyB7CiAgICBjb3JlTGlicmFyeURlc3VnYXJpbmcgImNvbS5hbmRyb2lkLnRvb2xzOmRlc3VnYXJfamRrX2xpYnM6Mi4xLjQiCn0=" | base64 -d > proje_klasoru/android/app/build.gradle
         echo "android/app/build.gradle dosyası oluşturuldu."
 
-    - name: Android v2 Embedding Dönüşümü Yap
+    - name: V1 Embedding Dosyalarını ve Kayıtlarını Tamamen Kazı
       run: |
-        echo "MainActivity dosyaları aranıyor ve v2 embedding yapısına dönüştürülüyor..."
+        echo "Eski otomatik oluşturulan plugin kayıtları temizleniyor..."
+        find proje_klasoru/android -name "GeneratedPluginRegistrant.java" -delete 2>/dev/null || true
+        
+        echo "MainActivity dosyaları sıfırdan modern v2 yapısına zorlanıyor..."
         find proje_klasoru/android/app/src/main -name "MainActivity.kt" -o -name "MainActivity.java" | while read -r dosya; do
+          package_name=$(grep "package " "$dosya" | head -n 1)
           if [[ "$dosya" == *.kt ]]; then
-            echo "Kotlin dosyası güncelleniyor: $dosya"
-            package_name=$(grep "package" "$dosya" | head -n 1)
             echo -e "$package_name\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity() {\n}" > "$dosya"
           elif [[ "$dosya" == *.java ]]; then
-            echo "Java dosyası güncelleniyor: $dosya"
-            package_name=$(grep "package" "$dosya" | head -n 1)
             echo -e "$package_name\n\nimport io.flutter.embedding.android.FlutterActivity;\n\npublic class MainActivity extends FlutterActivity {\n}" > "$dosya"
           fi
         done
 
-    - name: AndroidManifest.xml v1 Kalıntılarını Temizle
+    - name: AndroidManifest.xml İçeriğindeki Tüm Riskli Satırları Sil
       run: |
-        echo "AndroidManifest.xml temizliği başlatılıyor..."
+        echo "AndroidManifest.xml dosyalarındaki v1 meta-dataları temizleniyor..."
         find proje_klasoru/android -name "AndroidManifest.xml" | while read -r manifest; do
-          echo "Düzenlenen dosya: $manifest"
-          # Eski v1 embedding meta-data satırlarını tamamen kaldırır
-          sed -i '/android:name="io.flutter.app.FlutterApplication"/d' "$manifest"
-          sed -i '/android:name="io.flutter.embedding.android.SplashScreenDrawable"/d' "$manifest"
-          # Dokümantasyona göre eski name tanımlarını temizleyip normalleştirir
-          sed -i 's/android:name="io.flutter.app.FlutterActivity"/android:name="io.flutter.embedding.android.FlutterActivity"/g' "$manifest"
+          # Eski sınıflara ve sarmalayıcılara ait tüm referans satırlarını dosyadan uçurur
+          sed -i '/io.flutter.app.FlutterApplication/d' "$manifest"
+          sed -i '/io.flutter.embedding.android.SplashScreenDrawable/d' "$manifest"
+          sed -i '/flutterEmbedding/d' "$manifest"
+          sed -i 's/io.flutter.app.FlutterActivity/io.flutter.embedding.android.FlutterActivity/g' "$manifest"
         done
 
     - name: KONTROL Manifest Icerigini Goster
@@ -86,7 +85,9 @@ jobs:
 
     - name: Bagimliliklari Yukle
       working-directory: proje_klasoru
-      run: flutter pub get
+      run: |
+        flutter pub get
+        flutter clean
 
     - name: Uygulama Ikonlarini Olustur
       working-directory: proje_klasoru
@@ -117,4 +118,3 @@ jobs:
       with:
         name: seray_saglik_derleme_sonucu
         path: ${{ env.SUPER_ZIP }}
-        
