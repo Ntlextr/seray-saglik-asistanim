@@ -27,6 +27,8 @@ jobs:
 
     - name: Derleme Scriptini Calistir
       run: |
+        # Klasörün içindeki derle.sh dosyasını ana dizine kopyalayıp çalıştırıyoruz
+        cp .github/workflows/derle.sh ./derle.sh
         chmod +x derle.sh
         ./derle.sh
 
