@@ -1,4 +1,4 @@
-name: Flutter Build APK
+name: Flutter Build APK from ZIP
 
 on:
   push:
@@ -25,40 +25,59 @@ jobs:
       with:
         channel: 'stable'
 
+    - name: Proje ZIP Dosyasını Klasöre Çıkar (Unzip)
+      run: |
+        if [ -f "seray_saglikv1.46.zip" ]; then
+          unzip -q seray_saglikv1.46.zip -d proje_klasoru
+          echo "ZIP dosyası başarıyla 'proje_klasoru' içine çıkarıldı!"
+          ls -la proje_klasoru
+        else
+          echo "HATA: seray_saglikv1.46.zip dosyası ana dizinde bulunamadı!"
+          exit 1
+        fi
+
     - name: Android build.gradle Güncelle
       run: |
-        mkdir -p android/app
-        echo "ZGVmYXVsdENvbmZpZyB7CiAgICBhcHBsaWNhdGlvbklkICJ7YXBwbGljYXRpb25JZH0iCiAgICBtaW5TZGtWZXJzaW9uIDIzCiAgICB0YXJnZXRTZGtWZXJzaW9uIDM2CiAgICB2ZXJzaW9uQ29kZSBmbHV0dGVyLnZlcnNpb25Db2RlCiAgICB2ZXJzaW9uTmFtZSBmbHV0dGVyLnZlcnNpb25OYW1lCn0KCmJ1aWxkVHlwZXMgewogICAgcmVsZWFzZSB7CiAgICAgICAgc2lnbmluZ0NvbmZpZyBzaWduaW5nQ29uZmlncy5kZWJ1ZwogICAgfQp9CgpmbHV0dGVyIHsKICAgIHNvdXJjZSAnLi4vLi4nCn0KCmRlcGVuZGVuY2llcyB7CiAgICBjb3JlTGlicmFyeURlc3VnYXJpbmcgImNvbS5hbmRyb2lkLnRvb2xzOmRlc3VnYXJfamRrX2xpYnM6Mi4xLjQiCn0=" | base64 -d > android/app/build.gradle
-        echo "android/app/build.gradle dosyası güvenli şekilde oluşturuldu!"
+        mkdir -p proje_klasoru/android/app
+        echo "ZGVmYXVsdENvbmZpZyB7CiAgICBhcHBsaWNhdGlvbklkICJ7YXBwbGljYXRpb25JZH0iCiAgICBtaW5TZGtWZXJzaW9uIDIzCiAgICB0YXJnZXRTZGtWZXJzaW9uIDM2CiAgICB2ZXJzaW9uQ29kZSBmbHV0dGVyLnZlcnNpb25Db2RlCiAgICB2ZXJzaW9uTmFtZSBmbHV0dGVyLnZlcnNpb25OYW1lCn0KCmJ1aWxkVHlwZXMgewogICAgcmVsZWFzZSB7CiAgICAgICAgc2lnbmluZ0NvbmZpZyBzaWduaW5nQ29uZmlncy5kZWJ1ZwogICAgfQp9CgpmbHV0dGVyIHsKICAgIHNvdXJjZSAnLi4vLi4nCn0KCmRlcGVuZGVuY2llcyB7CiAgICBjb3JlTGlicmFyeURlc3VnYXJpbmcgImNvbS5hbmRyb2lkLnRvb2xzOmRlc3VnYXJfamRrX2xpYnM6Mi4xLjQiCn0=" | base64 -d > proje_klasoru/android/app/build.gradle
+        echo "android/app/build.gradle dosyası güncellendi!"
 
     - name: KONTROL Manifest Icerigini Goster
       run: |
         echo "----- AndroidManifest.xml (izinler) -----"
-        grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "HIC IZIN BULUNAMADI!"
+        grep "uses-permission" proje_klasoru/android/app/src/main/AndroidManifest.xml || echo "AndroidManifest dosyası bulunamadı veya izin yok."
         echo "------------------------------------------"
 
     - name: Bagimliliklari Yukle
+      working-directory: proje_klasoru
       run: flutter pub get
 
     - name: Uygulama Ikonlarini Olustur
-      run: flutter pub run flutter_launcher_icons
+      working-directory: proje_klasoru
+      run: |
+        flutter pub run flutter_launcher_icons || echo "Ikon paketi bulunamadı, bu adım atlanıyor."
 
     - name: Acilis Ekranini (Splash) Olustur
-      run: flutter pub run flutter_native_splash:create
+      working-directory: proje_klasoru
+      run: |
+        flutter pub run flutter_native_splash:create || echo "Splash paketi bulunamadı, bu adım atlanıyor."
 
     - name: APK Derle (Release Surumu)
+      working-directory: proje_klasoru
       run: flutter build apk --release
 
     - name: Hem APK Hem Tum Kaynak Kodlari Tek Bir ZIP Paketi Yap
+      working-directory: proje_klasoru
       run: |
         VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' ' | tr -d '\r')
         SUPER_ZIP_NAME="seray_saglik_HEPS_ICINDE_v${VERSION}.zip"
-        cp build/app/outputs/flutter-apk/app-release.apk "./seray_saglik_asistanim_v${VERSION}.apk"
-        zip -r "${SUPER_ZIP_NAME}" "./seray_saglik_asistanim_v${VERSION}.apk" lib assets pubspec.yaml .github android
+        cp build/app/outputs/flutter-apk/app-release.apk "../seray_saglik_asistanim_v${VERSION}.apk"
+        cd ..
+        zip -r "${SUPER_ZIP_NAME}" "./seray_saglik_asistanim_v${VERSION}.apk" proje_klasoru/lib proje_klasoru/assets proje_klasoru/pubspec.yaml .github
         echo "SUPER_ZIP=${SUPER_ZIP_NAME}" >> $GITHUB_ENV
 
     - name: 🎁 TEK PAKETTE (APK + KAYNAK KODLAR) TESLIM ET
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.SUPER_ZIP }}
+        name: seray_saglik_derleme_sonucu
         path: ${{ env.SUPER_ZIP }}
