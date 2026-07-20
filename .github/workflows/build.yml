@@ -28,8 +28,18 @@ jobs:
     - name: Proje ZIP Dosyasını Klasöre Çıkar (Unzip)
       run: |
         if [ -f "seray_saglikv1.46.zip" ]; then
-          unzip -q seray_saglikv1.46.zip -d proje_klasoru
-          echo "ZIP dosyası başarıyla 'proje_klasoru' içine çıkarıldı!"
+          mkdir -p ham_ayiklama
+          unzip -q seray_saglikv1.46.zip -d ham_ayiklama
+          echo "ZIP başarıyla açıldı, dizin yapısı düzeltiliyor..."
+          
+          # Zip içinden ekstra bir klasör çıktıysa veya doğrudan dosyalar geldiyse algıla
+          if [ -f "ham_ayiklama/pubspec.yaml" ]; then
+            mv ham_ayiklama proje_klasoru
+          else
+            mv ham_ayiklama/* proje_klasoru
+          fi
+          
+          echo "Güncel proje dizini:"
           ls -la proje_klasoru
         else
           echo "HATA: seray_saglikv1.46.zip dosyası ana dizinde bulunamadı!"
@@ -40,12 +50,12 @@ jobs:
       run: |
         mkdir -p proje_klasoru/android/app
         echo "ZGVmYXVsdENvbmZpZyB7CiAgICBhcHBsaWNhdGlvbklkICJ7YXBwbGljYXRpb25JZH0iCiAgICBtaW5TZGtWZXJzaW9uIDIzCiAgICB0YXJnZXRTZGtWZXJzaW9uIDM2CiAgICB2ZXJzaW9uQ29kZSBmbHV0dGVyLnZlcnNpb25Db2RlCiAgICB2ZXJzaW9uTmFtZSBmbHV0dGVyLnZlcnNpb25OYW1lCn0KCmJ1aWxkVHlwZXMgewogICAgcmVsZWFzZSB7CiAgICAgICAgc2lnbmluZ0NvbmZpZyBzaWduaW5nQ29uZmlncy5kZWJ1ZwogICAgfQp9CgpmbHV0dGVyIHsKICAgIHNvdXJjZSAnLi4vLi4nCn0KCmRlcGVuZGVuY2llcyB7CiAgICBjb3JlTGlicmFyeURlc3VnYXJpbmcgImNvbS5hbmRyb2lkLnRvb2xzOmRlc3VnYXJfamRrX2xpYnM6Mi4xLjQiCn0=" | base64 -d > proje_klasoru/android/app/build.gradle
-        echo "android/app/build.gradle dosyası güncellendi!"
+        echo "android/app/build.gradle dosyası oluşturuldu."
 
     - name: KONTROL Manifest Icerigini Goster
       run: |
         echo "----- AndroidManifest.xml (izinler) -----"
-        grep "uses-permission" proje_klasoru/android/app/src/main/AndroidManifest.xml || echo "AndroidManifest dosyası bulunamadı veya izin yok."
+        grep "uses-permission" proje_klasoru/android/app/src/main/AndroidManifest.xml || echo "AndroidManifest veya izin bulunamadı."
         echo "------------------------------------------"
 
     - name: Bagimliliklari Yukle
