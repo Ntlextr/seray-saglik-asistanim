@@ -2,9 +2,9 @@
 set -e
 
 echo "=== 1. Proje ZIP Dosyası Ayıklanıyor ==="
-if [ -f "seray_saglikv1.46.zip" ]; then
+if [ -f "seray_saglikv1.47.zip" ]; then
     mkdir -p ham_ayiklama
-    unzip -q seray_saglikv1.46.zip -d ham_ayiklama
+    unzip -q seray_saglikv1.47.zip -d ham_ayiklama
     
     if [ -f "ham_ayiklama/pubspec.yaml" ]; then
         mv ham_ayiklama projem
@@ -14,7 +14,7 @@ if [ -f "seray_saglikv1.46.zip" ]; then
     fi
     echo "Kaynak dosyalar başarıyla ayıklandı."
 else
-    echo "HATA: seray_saglikv1.46.zip bulunamadı!"
+    echo "HATA: seray_saglikv1.47.zip bulunamadı!"
     exit 1
 fi
 
@@ -78,7 +78,7 @@ flutter build apk --release
 
 echo "=== 6. Tüm Projeyi ve APK'yı Eksiksiz ZIP Paketine Alıyor ==="
 VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' ' | tr -d '\r')
-SUPER_ZIP_NAME="seray_saglik_HEPS_ICINDE_v${VERSION}.zip"
+SUPER_ZIP_NAME="seray_saglik_Hepsi_Yeni_v${VERSION}.zip"
 
 # APK dosyasını ana dizine çıkartıyoruz
 cp build/app/outputs/flutter-apk/app-release.apk "../seray_saglik_asistanim_v${VERSION}.apk"
