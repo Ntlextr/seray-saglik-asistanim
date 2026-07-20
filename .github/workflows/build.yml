@@ -25,19 +25,9 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Python Kurulumu
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-
     - name: Android build.gradle Güncelle
       run: |
-        python3 - << 'PYEOF'
-        import os
-
-        gradle_yol = "android/app/build.gradle" 
-
-        yeni_gradle = """
+        cat << 'EOF' > android/app/build.gradle
     defaultConfig {
         applicationId "{applicationId}"
         minSdkVersion 23
@@ -60,11 +50,8 @@ flutter {
 dependencies {
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
 }
-"""
-        with open(gradle_yol, "w", encoding="utf-8") as f:
-            f.write(yeni_gradle)
-        print(f"{gradle_yol} komple, garantili icerikle yeniden yazildi (compileSdk 36).")
-        PYEOF
+EOF
+        echo "android/app/build.gradle komple, garantili icerikle yeniden yazildi (compileSdk 36)."
 
     - name: KONTROL Manifest Icerigini Goster
       run: |
