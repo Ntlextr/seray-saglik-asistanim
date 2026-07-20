@@ -19,16 +19,16 @@ else
 fi
 
 echo "=== 2. Modern ve Sıfır Bir Proje Üretiliyor ==="
-flutter create --platforms=android Akıllı_Sağlik_Asistanım
+flutter create --platforms=android Akilli_Sağlik_Asistanim
 
 echo "=== 3. Tüm Kaynak Kodlar ve Assets Eksiksiz Aktarılıyor ==="
-rm -rf Akıllı_Sağlik_Asistanim/lib Akıllı_Sağlik_Asistanım/pubspec.yaml
-cp -r projem/lib Akıllı_Sağlik_Asistanim/
-cp projem/pubspec.yaml Akıllı_Sağlik_Asistanim/
+rm -rf Akilli_Sağlik_Asistanim/lib Akilli_Sağlik_Asistanim/pubspec.yaml
+cp -r projem/lib Akilli_Sağlik_Asistanim/
+cp projem/pubspec.yaml Akilli_Sağlik_Asistanim/
 
 # Son ekran görüntüsündeki fontlar ve tüm assets klasörü buradaki komutla yeni projeye aktarılıyor
 if [ -d "projem/assets" ]; then
-    cp -r projem/assets Akıllı_Sağlik_Asistanim/
+    cp -r projem/assets Akilli_Sağlik_Asistanim/
     echo "Assets klasörü başarıyla yeni projeye enjekte edildi."
 fi
 
