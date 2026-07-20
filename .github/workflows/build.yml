@@ -1,4 +1,4 @@
-name: Flutter Build APK from ZIP (Modern Solution)
+name: Flutter Build APK from ZIP (Safe Solution)
 
 on:
   push:
@@ -25,102 +25,14 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Proje ZIP Dosyasını Klasöre Çıkar (Unzip)
+    - name: Derleme Scriptini Calistir
       run: |
-        if [ -f "seray_saglikv1.46.zip" ]; then
-          mkdir -p ham_ayiklama
-          unzip -q seray_saglikv1.46.zip -d ham_ayiklama
-          
-          if [ -f "ham_ayiklama/pubspec.yaml" ]; then
-            mv ham_ayiklama eski_proje
-          else
-            mkdir -p eski_proje
-            mv ham_ayiklama/* eski_proje/ 2>/dev/null || mv ham_ayiklama eski_proje
-          fi
-          echo "Kaynak dosyalar başarıyla ayıklandı."
-        else
-          echo "HATA: seray_saglikv1.46.zip bulunamadı!"
-          exit 1
-        fi
-
-    - name: Modern ve Sıfır Bir Proje Üret
-      run: |
-        flutter create --platforms=android yeni_temiz_proje
-        echo "Modern altyapı oluşturuldu."
-
-    - name: Kaynak Kodları ve Paketleri Yeni Yapıya Aktar
-      run: |
-        rm -rf yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml
-        cp -r eski_proje/lib yeni_temiz_proje/
-        cp eski_proje/pubspec.yaml yeni_temiz_proje/
-        
-        if [ -d "eski_proje/assets" ]; then
-          cp -r eski_proje/assets yeni_temiz_proje/
-        fi
-        echo "Kod aktarımı tamamlandı."
-
-    - name: Modern Gradle Ayarlarını Yapılandır (Bypass Unsupported Gradle)
-      run: |
-        # Modern Flutter projelerinde build.gradle eklenti blokları üzerinden yönetilir.
-        # Sizin istediğiniz SDK ayarlarını (23 ve 36) modern sözdizimiyle entegre ediyoruz.
-        cat << 'EOF' > yeni_temiz_proje/android/app/build.gradle
-plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
-}
-
-android {
-    namespace "com.example.seray_saglik_asistanim"
-    compileSdk 36
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    defaultConfig {
-        applicationId "com.example.seray_saglik_asistanim"
-        minSdkVersion 23
-        targetSdkVersion 36
-        versionCode 1
-        versionName "1.0.0"
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.debug
-        }
-    }
-}
-
-dependencies {
-    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
-}
-EOF
-        echo "Yeni nesil build.gradle başarıyla uygulandı."
-
-    - name: Bagimliliklari Yukle
-      working-directory: yeni_temiz_proje
-      run: flutter pub get
-
-    - name: APK Derle (Release Surumu)
-      working-directory: yeni_temiz_proje
-      run: flutter build apk --release
-
-    - name: Hem APK Hem Tum Kaynak Kodlari Tek Bir ZIP Paketi Yap
-      working-directory: yeni_temiz_proje
-      run: |
-        VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' ' | tr -d '\r')
-        SUPER_ZIP_NAME="seray_saglik_HEPS_ICINDE_v${VERSION}.zip"
-        cp build/app/outputs/flutter-apk/app-release.apk "../${SUPER_ZIP_NAME%.zip}.apk"
-        cd ..
-        zip -r "${SUPER_ZIP_NAME}" "./${SUPER_ZIP_NAME%.zip}.apk" yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml .github
-        echo "SUPER_ZIP=${SUPER_ZIP_NAME}" >> $GITHUB_ENV
+        chmod +x derle.sh
+        ./derle.sh
 
     - name: 🎁 TEK PAKETTE (APK + KAYNAK KODLAR) TESLIM ET
       uses: actions/upload-artifact@v4
       with:
         name: seray_saglik_derleme_sonucu
-        path: ${{ env.SUPER_ZIP }}
+        path: "*.zip"
         
