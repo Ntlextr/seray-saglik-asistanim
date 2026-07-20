@@ -23,14 +23,14 @@ flutter create --platforms=android yeni_temiz_proje
 
 echo "=== 3. Kaynak Kodlar Yeni Yapıya Aktarılıyor ==="
 rm -rf yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml
-cp -r proje_klasoru/lib yeni_temiz_proje/
+cp -r  proje_klasoru/lib yeni_temiz_proje/
 cp proje_klasoru/pubspec.yaml yeni_temiz_proje/
 
 if [ -d "proje_klasoru/assets" ]; then
-    cp -r proje_klasoru/assets yeni_temiz_proje/
+    cp -r  proje_klasoru/assets yeni_temiz_proje/
 fi
 
-echo "=== 4. Modern Gradle Ayarları Yapılandırılıyor ==="
+echo "=== 4. Modern Gradle Ayarları ve Desugaring Yapılandırılıyor ==="
 cat << 'EOF' > yeni_temiz_proje/android/app/build.gradle
 plugins {
     id "com.android.application"
@@ -43,6 +43,8 @@ android {
     compileSdk 36
 
     compileOptions {
+        // Desugaring kütüphanesinin Java 8 ve üzeri özellikleri kullanmasını sağlıyoruz
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
@@ -53,6 +55,8 @@ android {
         targetSdkVersion 36
         versionCode 1
         versionName "1.0.0"
+        // MultiDex ve geriye dönük kütüphane desteğini burada da açıyoruz
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -79,4 +83,4 @@ cp build/app/outputs/flutter-apk/app-release.apk "../seray_saglik_asistanim_v${V
 cd ..
 zip -r "${SUPER_ZIP_NAME}" "./seray_saglik_asistanim_v${VERSION}.apk" yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml .github
 echo "İşlem tamamlandı, paket hazır: ${SUPER_ZIP_NAME}"
-
+feg
