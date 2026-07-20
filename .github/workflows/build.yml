@@ -1,4 +1,4 @@
-name: Flutter Build APK from ZIP (Safe Scratch Build)
+name: Flutter Build APK from ZIP (Modern Solution)
 
 on:
   push:
@@ -37,50 +37,72 @@ jobs:
             mkdir -p eski_proje
             mv ham_ayiklama/* eski_proje/ 2>/dev/null || mv ham_ayiklama eski_proje
           fi
-          echo "Eski kaynak dosyalar 'eski_proje' klasörüne alındı."
+          echo "Kaynak dosyalar başarıyla ayıklandı."
         else
-          echo "HATA: seray_saglikv1.46.zip dosyası bulunamadı!"
+          echo "HATA: seray_saglikv1.46.zip bulunamadı!"
           exit 1
         fi
 
-    - name: Sıfırdan Modern v2 Uyumlu Proje Oluştur
+    - name: Modern ve Sıfır Bir Proje Üret
       run: |
-        # Hata üreten tüm eski Android klasörünü baypas etmek için yepyeni bir proje oluşturuyoruz
         flutter create --platforms=android yeni_temiz_proje
-        echo "Sıfır km modern Android projesi başarıyla üretildi."
+        echo "Modern altyapı oluşturuldu."
 
-    - name: Kaynak Kodları Yeni Projeye Enjekte Et
+    - name: Kaynak Kodları ve Paketleri Yeni Yapıya Aktar
       run: |
-        # Sizin yazdığınız uygulama kodlarını sıfır projenin üzerine yazıyoruz
         rm -rf yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml
         cp -r eski_proje/lib yeni_temiz_proje/
         cp eski_proje/pubspec.yaml yeni_temiz_proje/
         
-        # Eğer projenizde assets (resimler vb.) klasörü varsa onu da taşıyoruz
         if [ -d "eski_proje/assets" ]; then
           cp -r eski_proje/assets yeni_temiz_proje/
         fi
-        echo "Uygulama kaynak kodları modern yapıya taşındı."
+        echo "Kod aktarımı tamamlandı."
 
-    - name: Android build.gradle Güncelle
+    - name: Modern Gradle Ayarlarını Yapılandır (Bypass Unsupported Gradle)
       run: |
-        # Sizin en başta istediğiniz güncel Gradle ayarlarını yeni temiz projeye uyguluyoruz
-        echo "ZGVmYXVsdENvbmZpZyB7CiAgICBhcHBsaWNhdGlvbklkICJ7YXBwbGljYXRpb25JZH0iCiAgICBtaW5TZGtWZXJzaW9uIDIzCiAgICB0YXJnZXRTZGtWZXJzaW9uIDM2CiAgICB2ZXJzaW9uQ29kZSBmbHV0dGVyLnZlcnNpb25Db2RlCiAgICB2ZXJzaW9uTmFtZSBmbHV0dGVyLnZlcnNpb25OYW1lCn0KCmJ1aWxkVHlwZXMgewogICAgcmVsZWFzZSB7CiAgICAgICAgc2lnbmluZ0NvbmZpZyBzaWduaW5nQ29uZmlncy5kZWJ1ZwogICAgfQp9CgpmbHV0dGVyIHsKICAgIHNvdXJjZSAnLi4vLi4nCn0KCmRlcGVuZGVuY2llcyB7CiAgICBjb3JlTGlicmFyeURlc3VnYXJpbmcgImNvbS5hbmRyb2lkLnRvb2xzOmRlc3VnYXJfamRrX2xpYnM6Mi4xLjQiCn0=" | base64 -d > yeni_temiz_proje/android/app/build.gradle
-        echo "Yeni build.gradle sorunsuz şekilde oluşturuldu."
+        # Modern Flutter projelerinde build.gradle eklenti blokları üzerinden yönetilir.
+        # Sizin istediğiniz SDK ayarlarını (23 ve 36) modern sözdizimiyle entegre ediyoruz.
+        cat << 'EOF' > yeni_temiz_proje/android/app/build.gradle
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace "com.example.seray_saglik_asistanim"
+    compileSdk 36
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        applicationId "com.example.seray_saglik_asistanim"
+        minSdkVersion 23
+        targetSdkVersion 36
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+dependencies {
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
+}
+EOF
+        echo "Yeni nesil build.gradle başarıyla uygulandı."
 
     - name: Bagimliliklari Yukle
       working-directory: yeni_temiz_proje
       run: flutter pub get
-
-    - name: Uygulama Ikonlarini Olustur
-      working-directory: yeni_temiz_proje
-      run: |
-        flutter pub run flutter_launcher_icons || echo "Ikon paketi bulunamadı, bu adım atlanıyor."
-
-    - name: Acilis Ekranini (Splash) Olustur
-      working-directory: yeni_temiz_proje
-      run: |
-        flutter pub run flutter_native_splash:create || echo "Splash paketi bulunamadı, bu adım atlanıyor."
 
     - name: APK Derle (Release Surumu)
       working-directory: yeni_temiz_proje
