@@ -1,4 +1,4 @@
-name: Flutter Build APK from ZIP
+name: Flutter Build APK from ZIP (Safe Scratch Build)
 
 on:
   push:
@@ -30,90 +30,70 @@ jobs:
         if [ -f "seray_saglikv1.46.zip" ]; then
           mkdir -p ham_ayiklama
           unzip -q seray_saglikv1.46.zip -d ham_ayiklama
-          echo "ZIP başarıyla açıldı, dizin yapısı düzeltiliyor..."
           
           if [ -f "ham_ayiklama/pubspec.yaml" ]; then
-            mv ham_ayiklama proje_klasoru
+            mv ham_ayiklama eski_proje
           else
-            mv ham_ayiklama/* proje_klasoru/ 2>/dev/null || mv ham_ayiklama proje_klasoru
+            mkdir -p eski_proje
+            mv ham_ayiklama/* eski_proje/ 2>/dev/null || mv ham_ayiklama eski_proje
           fi
-          
-          echo "Güncel proje dizini:"
-          ls -la proje_klasoru
+          echo "Eski kaynak dosyalar 'eski_proje' klasörüne alındı."
         else
-          echo "HATA: seray_saglikv1.46.zip dosyası ana dizinde bulunamadı!"
+          echo "HATA: seray_saglikv1.46.zip dosyası bulunamadı!"
           exit 1
         fi
 
+    - name: Sıfırdan Modern v2 Uyumlu Proje Oluştur
+      run: |
+        # Hata üreten tüm eski Android klasörünü baypas etmek için yepyeni bir proje oluşturuyoruz
+        flutter create --platforms=android yeni_temiz_proje
+        echo "Sıfır km modern Android projesi başarıyla üretildi."
+
+    - name: Kaynak Kodları Yeni Projeye Enjekte Et
+      run: |
+        # Sizin yazdığınız uygulama kodlarını sıfır projenin üzerine yazıyoruz
+        rm -rf yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml
+        cp -r eski_proje/lib yeni_temiz_proje/
+        cp eski_proje/pubspec.yaml yeni_temiz_proje/
+        
+        # Eğer projenizde assets (resimler vb.) klasörü varsa onu da taşıyoruz
+        if [ -d "eski_proje/assets" ]; then
+          cp -r eski_proje/assets yeni_temiz_proje/
+        fi
+        echo "Uygulama kaynak kodları modern yapıya taşındı."
+
     - name: Android build.gradle Güncelle
       run: |
-        mkdir -p proje_klasoru/android/app
-        echo "ZGVmYXVsdENvbmZpZyB7CiAgICBhcHBsaWNhdGlvbklkICJ7YXBwbGljYXRpb25JZH0iCiAgICBtaW5TZGtWZXJzaW9uIDIzCiAgICB0YXJnZXRTZGtWZXJzaW9uIDM2CiAgICB2ZXJzaW9uQ29kZSBmbHV0dGVyLnZlcnNpb25Db2RlCiAgICB2ZXJzaW9uTmFtZSBmbHV0dGVyLnZlcnNpb25OYW1lCn0KCmJ1aWxkVHlwZXMgewogICAgcmVsZWFzZSB7CiAgICAgICAgc2lnbmluZ0NvbmZpZyBzaWduaW5nQ29uZmlncy5kZWJ1ZwogICAgfQp9CgpmbHV0dGVyIHsKICAgIHNvdXJjZSAnLi4vLi4nCn0KCmRlcGVuZGVuY2llcyB7CiAgICBjb3JlTGlicmFyeURlc3VnYXJpbmcgImNvbS5hbmRyb2lkLnRvb2xzOmRlc3VnYXJfamRrX2xpYnM6Mi4xLjQiCn0=" | base64 -d > proje_klasoru/android/app/build.gradle
-        echo "android/app/build.gradle dosyası oluşturuldu."
-
-    - name: V1 Embedding Dosyalarını ve Kayıtlarını Tamamen Kazı
-      run: |
-        echo "Eski otomatik oluşturulan plugin kayıtları temizleniyor..."
-        find proje_klasoru/android -name "GeneratedPluginRegistrant.java" -delete 2>/dev/null || true
-        
-        echo "MainActivity dosyaları sıfırdan modern v2 yapısına zorlanıyor..."
-        find proje_klasoru/android/app/src/main -name "MainActivity.kt" -o -name "MainActivity.java" | while read -r dosya; do
-          package_name=$(grep "package " "$dosya" | head -n 1)
-          if [[ "$dosya" == *.kt ]]; then
-            echo -e "$package_name\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity() {\n}" > "$dosya"
-          elif [[ "$dosya" == *.java ]]; then
-            echo -e "$package_name\n\nimport io.flutter.embedding.android.FlutterActivity;\n\npublic class MainActivity extends FlutterActivity {\n}" > "$dosya"
-          fi
-        done
-
-    - name: AndroidManifest.xml İçeriğindeki Tüm Riskli Satırları Sil
-      run: |
-        echo "AndroidManifest.xml dosyalarındaki v1 meta-dataları ve eski Application adları temizleniyor..."
-        find proje_klasoru/android -name "AndroidManifest.xml" | while read -r manifest; do
-          # Satır ne olursa olsun içinde io.flutter.app.FlutterApplication geçen kelimeyi siler veya standartlaştırır
-          sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="android.app.Application"/g' "$manifest"
-          sed -i 's/io.flutter.app.FlutterApplication/android.app.Application/g' "$manifest"
-          sed -i '/io.flutter.embedding.android.SplashScreenDrawable/d' "$manifest"
-          sed -i '/flutterEmbedding/d' "$manifest"
-          sed -i 's/io.flutter.app.FlutterActivity/io.flutter.embedding.android.FlutterActivity/g' "$manifest"
-        done
-
-    - name: KONTROL Manifest Icerigini Goster
-      run: |
-        echo "----- AndroidManifest.xml (izinler) -----"
-        grep "uses-permission" proje_klasoru/android/app/src/main/AndroidManifest.xml || echo "AndroidManifest veya izin bulunamadı."
-        echo "------------------------------------------"
+        # Sizin en başta istediğiniz güncel Gradle ayarlarını yeni temiz projeye uyguluyoruz
+        echo "ZGVmYXVsdENvbmZpZyB7CiAgICBhcHBsaWNhdGlvbklkICJ7YXBwbGljYXRpb25JZH0iCiAgICBtaW5TZGtWZXJzaW9uIDIzCiAgICB0YXJnZXRTZGtWZXJzaW9uIDM2CiAgICB2ZXJzaW9uQ29kZSBmbHV0dGVyLnZlcnNpb25Db2RlCiAgICB2ZXJzaW9uTmFtZSBmbHV0dGVyLnZlcnNpb25OYW1lCn0KCmJ1aWxkVHlwZXMgewogICAgcmVsZWFzZSB7CiAgICAgICAgc2lnbmluZ0NvbmZpZyBzaWduaW5nQ29uZmlncy5kZWJ1ZwogICAgfQp9CgpmbHV0dGVyIHsKICAgIHNvdXJjZSAnLi4vLi4nCn0KCmRlcGVuZGVuY2llcyB7CiAgICBjb3JlTGlicmFyeURlc3VnYXJpbmcgImNvbS5hbmRyb2lkLnRvb2xzOmRlc3VnYXJfamRrX2xpYnM6Mi4xLjQiCn0=" | base64 -d > yeni_temiz_proje/android/app/build.gradle
+        echo "Yeni build.gradle sorunsuz şekilde oluşturuldu."
 
     - name: Bagimliliklari Yukle
-      working-directory: proje_klasoru
-      run: |
-        flutter pub get
-        flutter clean
+      working-directory: yeni_temiz_proje
+      run: flutter pub get
 
     - name: Uygulama Ikonlarini Olustur
-      working-directory: proje_klasoru
+      working-directory: yeni_temiz_proje
       run: |
         flutter pub run flutter_launcher_icons || echo "Ikon paketi bulunamadı, bu adım atlanıyor."
 
     - name: Acilis Ekranini (Splash) Olustur
-      working-directory: proje_klasoru
+      working-directory: yeni_temiz_proje
       run: |
         flutter pub run flutter_native_splash:create || echo "Splash paketi bulunamadı, bu adım atlanıyor."
 
     - name: APK Derle (Release Surumu)
-      working-directory: proje_klasoru
-      run: |
-        # Derleyicinin eski embedding kontrol mekanizmasını ezmek için gradle parametresi ekliyoruz
-        flutter build apk --release --no-version-check --pub
+      working-directory: yeni_temiz_proje
+      run: flutter build apk --release
 
     - name: Hem APK Hem Tum Kaynak Kodlari Tek Bir ZIP Paketi Yap
-      working-directory: proje_klasoru
+      working-directory: yeni_temiz_proje
       run: |
         VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' ' | tr -d '\r')
         SUPER_ZIP_NAME="seray_saglik_HEPS_ICINDE_v${VERSION}.zip"
-        cp build/app/outputs/flutter-apk/app-release.apk "../seray_saglik_asistanim_v${VERSION}.apk"
+        cp build/app/outputs/flutter-apk/app-release.apk "../${SUPER_ZIP_NAME%.zip}.apk"
         cd ..
-        zip -r "${SUPER_ZIP_NAME}" "./seray_saglik_asistanim_v${VERSION}.apk" proje_klasoru/lib proje_klasoru/assets proje_klasoru/pubspec.yaml .github
+        zip -r "${SUPER_ZIP_NAME}" "./${SUPER_ZIP_NAME%.zip}.apk" yeni_temiz_proje/lib yeni_temiz_proje/pubspec.yaml .github
         echo "SUPER_ZIP=${SUPER_ZIP_NAME}" >> $GITHUB_ENV
 
     - name: 🎁 TEK PAKETTE (APK + KAYNAK KODLAR) TESLIM ET
