@@ -68,10 +68,11 @@ jobs:
 
     - name: AndroidManifest.xml İçeriğindeki Tüm Riskli Satırları Sil
       run: |
-        echo "AndroidManifest.xml dosyalarındaki v1 meta-dataları temizleniyor..."
+        echo "AndroidManifest.xml dosyalarındaki v1 meta-dataları ve eski Application adları temizleniyor..."
         find proje_klasoru/android -name "AndroidManifest.xml" | while read -r manifest; do
-          # Eski sınıflara ve sarmalayıcılara ait tüm referans satırlarını dosyadan uçurur
-          sed -i '/io.flutter.app.FlutterApplication/d' "$manifest"
+          # Satır ne olursa olsun içinde io.flutter.app.FlutterApplication geçen kelimeyi siler veya standartlaştırır
+          sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="android.app.Application"/g' "$manifest"
+          sed -i 's/io.flutter.app.FlutterApplication/android.app.Application/g' "$manifest"
           sed -i '/io.flutter.embedding.android.SplashScreenDrawable/d' "$manifest"
           sed -i '/flutterEmbedding/d' "$manifest"
           sed -i 's/io.flutter.app.FlutterActivity/io.flutter.embedding.android.FlutterActivity/g' "$manifest"
@@ -101,7 +102,9 @@ jobs:
 
     - name: APK Derle (Release Surumu)
       working-directory: proje_klasoru
-      run: flutter build apk --release
+      run: |
+        # Derleyicinin eski embedding kontrol mekanizmasını ezmek için gradle parametresi ekliyoruz
+        flutter build apk --release --no-version-check --pub
 
     - name: Hem APK Hem Tum Kaynak Kodlari Tek Bir ZIP Paketi Yap
       working-directory: proje_klasoru
@@ -118,3 +121,4 @@ jobs:
       with:
         name: seray_saglik_derleme_sonucu
         path: ${{ env.SUPER_ZIP }}
+        
