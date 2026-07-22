@@ -1,4 +1,4 @@
-name: Flutter Build APK from Any ZIP (Seray Saglik Crash Fix Production)
+name: Flutter Build APK from Any ZIP (Seray Saglik Final Crash Fix)
 
 on:
   push:
@@ -95,21 +95,21 @@ jobs:
         EOF
         echo "build.gradle başarıyla güncellendi."
 
-    - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et (Kritik Adım)
+    - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et
       run: |
         MANIFEST_YOL="projem/android/app/src/main/AndroidManifest.xml"
         
-        # 1. Bildirim ve Ses için Gerekli Tüm İzinlerin Eklenmesi
+        # Tüm bildirim ve arka plan uyanma izinleri kalıcı ekleniyor
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' $MANIFEST_YOL
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' $MANIFEST_YOL
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />' $MANIFEST_YOL
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' $MANIFEST_YOL
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.WAKE_LOCK" />' $MANIFEST_YOL
         
-        # 2. İlaç Hatırlatıcının Arka Planda Çökmesini Önleyen Servis Altyapısının Eklenmesi
-        SERVIS_KODU='<receiver android: Azad="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" /><receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>'
+        # Kelime hatası düzeltildi: android:name="com.dexterous..." olarak düzgünce enjekte ediliyor
+        SERVIS_KODU='<receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" /><receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>'
         sed -i "s|<activity|$SERVIS_KODU\n        <activity|g" $MANIFEST_YOL
-        echo "Çökme engelleyici Android servis kayıtları başarıyla enjekte edildi."
+        echo "Servis kayıtları kusursuz şekilde düzeltildi."
 
     - name: Bağımlılıklar Yükleniyor ve APK Derleniyor
       run: |
