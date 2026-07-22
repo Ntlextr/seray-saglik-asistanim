@@ -1,4 +1,4 @@
-name: Flutter Build APK from ZIP (Seray Saglik Official Production)
+name: Flutter Build APK from Any ZIP (Seray Saglik Production)
 
 on:
   push:
@@ -25,11 +25,15 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Proje ZIP Dosyasını Klasöre Çıkar (Unzip)
+    - name: Proje ZIP Dosyasını Otomatik Tespit Et ve Çıkar
       run: |
-        if [ -f "sonseray_saglik_v1.50.zip" ]; then
+        # Klasördeki ilk .zip uzantılı dosyayı otomatik olarak bulur
+        ZIP_DOSYASI=$(ls *.zip | head -n 1)
+        
+        if [ -n "$ZIP_DOSYASI" ]; then
+          echo "Bulunan Proje Paketi: $ZIP_DOSYASI"
           mkdir -p ham_ayiklama
-          unzip -q sonseray_saglik_v1.50.zip -d ham_ayiklama
+          unzip -q "$ZIP_DOSYASI" -d ham_ayiklama
           
           if [ -f "ham_ayiklama/pubspec.yaml" ]; then
             mv ham_ayiklama projem
@@ -39,7 +43,7 @@ jobs:
           fi
           echo "Kaynak dosyalar başarıyla ayıklandı."
         else
-          echo "HATA: sonseray_saglik_v1.50.zip dosyası ana dizinde bulunamadı!"
+          echo "HATA: Ana dizinde hiçbir .zip dosyası bulunamadı!"
           exit 1
         fi
 
