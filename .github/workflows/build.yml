@@ -1,4 +1,4 @@
-name: Flutter Build APK from Any ZIP (Seray Saglik Production)
+name: Flutter Build APK from Any ZIP (Seray Saglik Light Production)
 
 on:
   push:
@@ -27,9 +27,7 @@ jobs:
 
     - name: Proje ZIP Dosyasını Otomatik Tespit Et ve Çıkar
       run: |
-        # Klasördeki ilk .zip uzantılı dosyayı otomatik olarak bulur
         ZIP_DOSYASI=$(ls *.zip | head -n 1)
-        
         if [ -n "$ZIP_DOSYASI" ]; then
           echo "Bulunan Proje Paketi: $ZIP_DOSYASI"
           mkdir -p ham_ayiklama
@@ -63,7 +61,6 @@ jobs:
 
     - name: Uygulama İsmi ve Modern Gradle Standartları Enjekte Ediliyor
       run: |
-        # Uygulama adını kalıcı olarak sabitleştiriyoruz
         sed -i 's/android:label=".*/android:label="Seray Sağlık Asistanım"/g' projem/android/app/src/main/AndroidManifest.xml
         
         cat << 'EOF' > projem/android/app/build.gradle
@@ -110,13 +107,23 @@ jobs:
         flutter clean
         flutter build apk --release
 
-    - name: Tüm Yapı Eksiksiz Olarak Yeniden ZIP Paketi Yapılıyor
+    - name: Sadece Gerekli Klasörleri ve APK'yı Hafif ZIP Paketi Yap
       run: |
-        cp projem/build/app/outputs/flutter-apk/app-release.apk "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk"
-        zip -r "seray_saglik_asistanim_v${{ env.SUPER_VERSION }}.zip" "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk" projem .github
+        # 521 MB'lık çöp build klasörlerini dahil etmemek için sadece kritik yerleri zipliyoruz
+        cp projem/build/app/outputs/flutter-apk/app-release.apk "./Seray_Siglik_Asistanim_v${{ env.SUPER_VERSION }}.apk"
+        mkdir -p teslimat_paketi
+        cp "./Seray_Siglik_Asistanim_v${{ env.SUPER_VERSION }}.apk" ./teslimat_paketi/
+        cp -r projem/lib ./teslimat_paketi/
+        cp -r projem/assets ./teslimat_paketi/
+        cp projem/pubspec.yaml ./teslimat_paketi/
+        cp -r .github ./teslimat_paketi/
+        
+        cd teslimat_paketi
+        zip -r "../seray_saglik_asistanim_v${{ env.SUPER_VERSION }}.zip" .
+        cd ..
 
     - name: 🎁 TEK PAKETTE (APK + TÜM KAYNAK KODLAR) TESLIM ET
       uses: actions/upload-artifact@v4
       with:
-        name: seray_saglik_asistanim_uretim_paketi
-        path: "*.zip"
+        name: seray_saglik_asistanim_hafif_paket
+        path: "seray_saglik_asistanim_v*.zip"
