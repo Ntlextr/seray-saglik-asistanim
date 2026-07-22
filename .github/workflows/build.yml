@@ -1,4 +1,4 @@
-name: Flutter Build APK from Any ZIP (Seray Saglik Light Production)
+name: Flutter Build APK from Any ZIP (Seray Saglik Crash Fix Production)
 
 on:
   push:
@@ -95,10 +95,21 @@ jobs:
         EOF
         echo "build.gradle başarıyla güncellendi."
 
-    - name: İlaç Hatırlatıcı Tam Zamanlı Alarm İzinleri Ekleniyor
+    - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et (Kritik Adım)
       run: |
-        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' projem/android/app/src/main/AndroidManifest.xml
-        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' projem/android/app/src/main/AndroidManifest.xml
+        MANIFEST_YOL="projem/android/app/src/main/AndroidManifest.xml"
+        
+        # 1. Bildirim ve Ses için Gerekli Tüm İzinlerin Eklenmesi
+        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' $MANIFEST_YOL
+        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' $MANIFEST_YOL
+        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />' $MANIFEST_YOL
+        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' $MANIFEST_YOL
+        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.WAKE_LOCK" />' $MANIFEST_YOL
+        
+        # 2. İlaç Hatırlatıcının Arka Planda Çökmesini Önleyen Servis Altyapısının Eklenmesi
+        SERVIS_KODU='<receiver android: Azad="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" /><receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>'
+        sed -i "s|<activity|$SERVIS_KODU\n        <activity|g" $MANIFEST_YOL
+        echo "Çökme engelleyici Android servis kayıtları başarıyla enjekte edildi."
 
     - name: Bağımlılıklar Yükleniyor ve APK Derleniyor
       run: |
@@ -109,10 +120,9 @@ jobs:
 
     - name: Sadece Gerekli Klasörleri ve APK'yı Hafif ZIP Paketi Yap
       run: |
-        # 521 MB'lık çöp build klasörlerini dahil etmemek için sadece kritik yerleri zipliyoruz
-        cp projem/build/app/outputs/flutter-apk/app-release.apk "./Seray_Siglik_Asistanim_v${{ env.SUPER_VERSION }}.apk"
+        cp projem/build/app/outputs/flutter-apk/app-release.apk "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk"
         mkdir -p teslimat_paketi
-        cp "./Seray_Siglik_Asistanim_v${{ env.SUPER_VERSION }}.apk" ./teslimat_paketi/
+        cp "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk" ./teslimat_paketi/
         cp -r projem/lib ./teslimat_paketi/
         cp -r projem/assets ./teslimat_paketi/
         cp projem/pubspec.yaml ./teslimat_paketi/
@@ -127,3 +137,4 @@ jobs:
       with:
         name: seray_saglik_asistanim_hafif_paket
         path: "seray_saglik_asistanim_v*.zip"
+        
