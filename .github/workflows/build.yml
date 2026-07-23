@@ -1,4 +1,4 @@
-name: Flutter Build APK from Any ZIP (Seray Saglik Final Crash Fix)
+name: Flutter Build APK from Any ZIP (Seray Saglik Final Fix)
 
 on:
   push:
@@ -59,6 +59,30 @@ jobs:
         echo "SUPER_VERSION=${NEW_VERSION%+*}" >> $GITHUB_ENV
         echo "Eski Versiyon: $OLD_VERSION -> Yeni Versiyon: $NEW_VERSION"
 
+    - name: Profil Kayıt Ekranı ve Yönlendirme Onarılıyor
+      run: |
+        PROFIL_EKRANI="projem/lib/screens/profil_kayit_ekrani.dart"
+        if [ -f "$PROFIL_EKRANI" ]; then
+          # Ana sayfa import'unu garantiye al
+          sed -i '1i import "package:seray_saglik_asistanim/screens/ana_sayfa.dart";' $PROFIL_EKRANI 2>/dev/null || true
+          
+          # Kayıt sonrası SnackBar gösterildiği yerde ana sayfaya yönlendirmeyi sağla
+          python3 -c "
+        path = '$PROFIL_EKRANI'
+        with open(path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        target = \"Profil onayları başarıyla kaydedildi!'))\"
+        replacement = \"Profil onayları başarıyla kaydedildi!'));\n      if (context.mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AnaSayfa()));\"
+        
+        if target in content and 'Navigator.pushReplacement' not in content:
+            content = content.replace(target, replacement)
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            print('Profil kayit ekrani yonlendirmesi basariyla eklendi.')
+        "
+        fi
+
     - name: Uygulama İsmi, Paket Adı ve MainActivity Düzeltiliyor
       run: |
         sed -i 's/android:label=".*/android:label="Seray Sağlık Asistanım"/g' projem/android/app/src/main/AndroidManifest.xml
@@ -117,5 +141,6 @@ jobs:
     - name: TEK PAKETTE TESLIM ET
       uses: actions/upload-artifact@v4
       with:
-        name: seray_saglik_asistanim_hafif_paket
+        name: seray_saglik_asistanim_yenison_paket
         path: "seray_saglik_asistanim_v*.zip"
+        
