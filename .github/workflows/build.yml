@@ -61,23 +61,19 @@ jobs:
 
     - name: Uygulama İsmi, Paket Adı ve MainActivity Düzeltiliyor
       run: |
-        # Manifest ve Label düzeltmesi
         sed -i 's/android:label=".*/android:label="Seray Sağlık Asistanım"/g' projem/android/app/src/main/AndroidManifest.xml
         
-        # MainActivity.kt / MainActivity.java için doğru package dizinini oluşturup dosyayı taşıyoruz
+        # MainActivity.kt dosyasını tek satırlık komutlarla sıfırdan ve güvenle oluşturuyoruz
         MAIN_DIR="projem/android/app/src/main/kotlin/com/serayteknoloji/saglik_asistanim"
-        mkdir -p $MAIN_DIR
-        
-        cat << 'EOF' > $MAIN_DIR/MainActivity.kt
-package com.serayteknoloji.saglik_asistanim
+        mkdir -p "$MAIN_DIR"
+        echo "package com.serayteknoloji.saglik_asistanim" > "$MAIN_DIR/MainActivity.kt"
+        echo "" >> "$MAIN_DIR/MainActivity.kt"
+        echo "import io.flutter.embedding.android.FlutterActivity" >> "$MAIN_DIR/MainActivity.kt"
+        echo "" >> "$MAIN_DIR/MainActivity.kt"
+        echo "class MainActivity: FlutterActivity() {" >> "$MAIN_DIR/MainActivity.kt"
+        echo "}" >> "$MAIN_DIR/MainActivity.kt"
 
-import io.flutter.embedding.android.FlutterActivity
-
-class MainActivity: FlutterActivity() {
-}
-EOF
-
-        # build.gradle Dosyasını Oluştur
+        # build.gradle Dosyasını Güncelle
         cat << 'EOF' > projem/android/app/build.gradle
 plugins {
     id "com.android.application"
@@ -114,29 +110,22 @@ EOF
       run: |
         MANIFEST_YOL="projem/android/app/src/main/AndroidManifest.xml"
         
-        # Manifest dosyasındaki eski mipmap/launcher_icon tanımını ic_launcher olarak standardize et
         sed -i 's/@mipmap\/launcher_icon/@mipmap\/ic_launcher/g' $MANIFEST_YOL
         
-        # Tüm bildirim ve arka plan uyanma izinleri kalıcı ekleniyor
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' $MANIFEST_YOL
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' $MANIFEST_YOL
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />' $MANIFEST_YOL
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' $MANIFEST_YOL
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.WAKE_LOCK" />' $MANIFEST_YOL
         
-        # Servislerin mükerrer olmadan düzgün enjekte edilmesi
         SERVIS_KODU='<receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" /><receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>'
         sed -i "s|<activity|$SERVIS_KODU\n        <activity|g" $MANIFEST_YOL
         echo "Servis kayıtları kusursuz şekilde düzeltildi."
 
-    # 🎨 SADECE ANDROID İÇİN İKON VE SPLASH EKRANI ÜRET
     - name: Özel PNG Resimlerini İkon ve Splash Ekranına Dönüştür
       run: |
         cd projem
-        
-        # pubspec.yaml dosyasındaki ios: true satırını otomatik olarak ios: false yapıyoruz
         sed -i 's/ios: true/ios: false/g' pubspec.yaml
-        
         flutter pub get
         flutter pub run flutter_launcher_icons
         flutter pub run flutter_native_splash:create
@@ -166,3 +155,4 @@ EOF
       with:
         name: seray_saglik_asistanim_yeni_paket
         path: "seray_saglik_asistanim_v*.zip"
+        
