@@ -59,30 +59,6 @@ jobs:
         echo "SUPER_VERSION=${NEW_VERSION%+*}" >> $GITHUB_ENV
         echo "Eski Versiyon: $OLD_VERSION -> Yeni Versiyon: $NEW_VERSION"
 
-    - name: Profil Kayıt Ekranı ve Yönlendirme Onarılıyor
-      run: |
-        PROFIL_EKRANI="projem/lib/screens/profil_kayit_ekrani.dart"
-        if [ -f "$PROFIL_EKRANI" ]; then
-          # Ana sayfa import'unu garantiye al
-          sed -i '1i import "package:seray_saglik_asistanim/screens/ana_sayfa.dart";' $PROFIL_EKRANI 2>/dev/null || true
-          
-          # Kayıt sonrası SnackBar gösterildiği yerde ana sayfaya yönlendirmeyi sağla
-          python3 -c "
-        path = '$PROFIL_EKRANI'
-        with open(path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        target = \"Profil onayları başarıyla kaydedildi!'))\"
-        replacement = \"Profil onayları başarıyla kaydedildi!'));\n      if (context.mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AnaSayfa()));\"
-        
-        if target in content and 'Navigator.pushReplacement' not in content:
-            content = content.replace(target, replacement)
-            with open(path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            print('Profil kayit ekrani yonlendirmesi basariyla eklendi.')
-        "
-        fi
-
     - name: Uygulama İsmi, Paket Adı ve MainActivity Düzeltiliyor
       run: |
         sed -i 's/android:label=".*/android:label="Seray Sağlık Asistanım"/g' projem/android/app/src/main/AndroidManifest.xml
@@ -93,6 +69,61 @@ jobs:
 
         printf 'plugins {\n    id "com.android.application"\n    id "kotlin-android"\n    id "dev.flutter.flutter-gradle-plugin"\n}\nandroid {\n    namespace "com.serayteknoloji.saglik_asistanim"\n    compileSdk 36\n    compileOptions {\n        coreLibraryDesugaringEnabled true\n        sourceCompatibility JavaVersion.VERSION_17\n        targetCompatibility JavaVersion.VERSION_17\n    }\n    defaultConfig {\n        applicationId "com.serayteknoloji.saglik_asistanim"\n        minSdkVersion 23\n        targetSdkVersion 36\n        multiDexEnabled true\n    }\n    buildTypes {\n        release {\n            signingConfig signingConfigs.debug\n        }\n    }\n}\ndependencies {\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"\n}\n' > projem/android/app/build.gradle
         echo "MainActivity ve build.gradle başarıyla güncellendi."
+
+    - name: Profil Kayıt Ekranı Onarımı (Akıllı İkon Tespiti + Geçiş Kodu)
+      run: |
+        python3 -c "
+        import os, re
+
+        file_path = 'projem/lib/screens/profil_kayit_ekrani.dart'
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                code = f.read()
+
+            # Ana sayfa import'u ekle
+            if 'ana_sayfa.dart' not in code:
+                code = 'import \"package:seray_saglik_asistanim/screens/ana_sayfa.dart\";\n' + code
+
+            # Proje içinde app_icon.png dosyasının tam yolunu dinamik olarak bul
+            icon_path = 'assets/images/app_icon.png'
+            for root, dirs, files in os.walk('projem'):
+                for file in files:
+                    if file.lower() == 'app_icon.png':
+                        icon_path = os.path.join(root, file).replace('projem/', '')
+                        break
+
+            print(f'Saptanan ikon yolu: {icon_path}')
+
+            # 1. AKILLI LOGO ENJEKSİYONU
+            logo_code = f'''
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+                child: Image.asset(
+                  \"{icon_path}\",
+                  height: 75,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.health_and_safety, size: 60, color: Colors.teal),
+                ),
+              ),
+            ),
+            '''
+            
+            if 'app_icon.png' not in code and 'Profil Kaydı' in code:
+                code = code.replace(\"Text('Profil Kaydı'\", logo_code + \"Text('Profil Kaydı'\")
+                code = code.replace('Text(\"Profil Kaydı\"', logo_code + 'Text(\"Profil Kaydı\"')
+
+            # 2. SAYFA GEÇİŞ KODU ENJEKSİYONU
+            nav_code = '\n      if (context.mounted) {\n        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AnaSayfa()));\n      }\n'
+            if 'Navigator.push' not in code and 'Navigator.pushReplacement' not in code:
+                if 'showSnackBar' in code:
+                    code = re.sub(r'(ScaffoldMessenger\.of\(context\)\.showSnackBar\(.*?\);)', r'\1' + nav_code, code, flags=re.DOTALL)
+                else:
+                    code = code.replace('kaydedildi!\'))', 'kaydedildi!\'));' + nav_code)
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(code)
+            print('Profil kayit ekranina otomatik ikon ve yonlendirme eklendi.')
+        "
 
     - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et
       run: |
@@ -124,23 +155,27 @@ jobs:
         flutter clean
         flutter build apk --release
 
-    - name: Sadece Gerekli Klasörleri ve APK'yı Hafif ZIP Paketi Yap
+    - name: Tüm Kodları ve Klasörleri ZIP Paketi Yap
       run: |
         cp projem/build/app/outputs/flutter-apk/app-release.apk "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk"
         mkdir -p teslimat_paketi
+        
         cp "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk" ./teslimat_paketi/
-        cp -r projem/lib ./teslimat_paketi/
-        cp -r projem/assets ./teslimat_paketi/
-        cp projem/pubspec.yaml ./teslimat_paketi/
-        cp -r .github ./teslimat_paketi/
+        cp -r projem/lib ./teslimat_paketi/ 2>/dev/null || true
+        cp -r projem/assets ./teslimat_paketi/ 2>/dev/null || true
+        cp -r projem/Assets ./teslimat_paketi/ 2>/dev/null || true
+        cp -r projem/images ./teslimat_paketi/ 2>/dev/null || true
+        cp -r projem/android ./teslimat_paketi/ 2>/dev/null || true
+        cp projem/pubspec.yaml ./teslimat_paketi/ 2>/dev/null || true
+        cp -r .github ./teslimat_paketi/ 2>/dev/null || true
         
         cd teslimat_paketi
         zip -r "../seray_saglik_asistanim_v${{ env.SUPER_VERSION }}.zip" .
         cd ..
 
-    - name: TEK PAKETTE TESLIM ET
+    - name: TEK PAKETTE TESLİM ET
       uses: actions/upload-artifact@v4
       with:
-        name: seray_saglik_asistanim_yenison_paket
+        name: seray_saglik_asistanim_tam_paket
         path: "seray_saglik_asistanim_v*.zip"
         
