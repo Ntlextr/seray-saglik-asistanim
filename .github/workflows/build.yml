@@ -99,6 +99,9 @@ jobs:
       run: |
         MANIFEST_YOL="projem/android/app/src/main/AndroidManifest.xml"
         
+        # Manifest dosyasındaki eski mipmap/launcher_icon tanımını ic_launcher olarak standardize et
+        sed -i 's/@mipmap\/launcher_icon/@mipmap\/ic_launcher/g' $MANIFEST_YOL
+        
         # Tüm bildirim ve arka plan uyanma izinleri kalıcı ekleniyor
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' $MANIFEST_YOL
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' $MANIFEST_YOL
@@ -106,15 +109,22 @@ jobs:
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' $MANIFEST_YOL
         sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.WAKE_LOCK" />' $MANIFEST_YOL
         
-        # Kelime hatası düzeltildi: android:name="com.dexterous..." olarak düzgünce enjekte ediliyor
+        # Servislerin mükerrer olmadan düzgün enjekte edilmesi
         SERVIS_KODU='<receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" /><receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>'
         sed -i "s|<activity|$SERVIS_KODU\n        <activity|g" $MANIFEST_YOL
         echo "Servis kayıtları kusursuz şekilde düzeltildi."
 
-    - name: Bağımlılıklar Yükleniyor ve APK Derleniyor
+    # 🎨 SENİN PNG RESİMLERİNİ UYGULAMA İKONU VE AÇILIŞ (SPLASH) EKRANI YAPAN ADIM
+    - name: Özel PNG Resimlerini İkon ve Splash Ekranına Dönüştür
       run: |
         cd projem
         flutter pub get
+        flutter pub run flutter_launcher_icons
+        flutter pub run flutter_native_splash:create
+
+    - name: Bağımlılıklar Yükleniyor ve APK Derleniyor
+      run: |
+        cd projem
         flutter clean
         flutter build apk --release
 
@@ -137,4 +147,3 @@ jobs:
       with:
         name: seray_saglik_asistanim_hafif_paket
         path: "seray_saglik_asistanim_v*.zip"
-        
