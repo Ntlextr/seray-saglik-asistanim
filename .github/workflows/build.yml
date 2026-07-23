@@ -59,41 +59,56 @@ jobs:
         echo "SUPER_VERSION=${NEW_VERSION%+*}" >> $GITHUB_ENV
         echo "Eski Versiyon: $OLD_VERSION -> Yeni Versiyon: $NEW_VERSION"
 
-    - name: Uygulama İsmi ve Modern Gradle Standartları Enjekte Ediliyor
+    - name: Uygulama İsmi, Paket Adı ve MainActivity Düzeltiliyor
       run: |
+        # Manifest ve Label düzeltmesi
         sed -i 's/android:label=".*/android:label="Seray Sağlık Asistanım"/g' projem/android/app/src/main/AndroidManifest.xml
         
+        # MainActivity.kt / MainActivity.java için doğru package dizinini oluşturup dosyayı taşıyoruz
+        MAIN_DIR="projem/android/app/src/main/kotlin/com/serayteknoloji/saglik_asistanim"
+        mkdir -p $MAIN_DIR
+        
+        cat << 'EOF' > $MAIN_DIR/MainActivity.kt
+package com.serayteknoloji.saglik_asistanim
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity: FlutterActivity() {
+}
+EOF
+
+        # build.gradle Dosyasını Oluştur
         cat << 'EOF' > projem/android/app/build.gradle
-        plugins {
-            id "com.android.application"
-            id "kotlin-android"
-            id "dev.flutter.flutter-gradle-plugin"
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+android {
+    namespace "com.serayteknoloji.saglik_asistanim"
+    compileSdk 36
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    defaultConfig {
+        applicationId "com.serayteknoloji.saglik_asistanim"
+        minSdkVersion 23
+        targetSdkVersion 36
+        multiDexEnabled true
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
         }
-        android {
-            namespace "com.serayteknoloji.saglik_asistanim"
-            compileSdk 36
-            compileOptions {
-                coreLibraryDesugaringEnabled true
-                sourceCompatibility JavaVersion.VERSION_17
-                targetCompatibility JavaVersion.VERSION_17
-            }
-            defaultConfig {
-                applicationId "com.serayteknoloji.saglik_asistanim"
-                minSdkVersion 23
-                targetSdkVersion 36
-                multiDexEnabled true
-            }
-            buildTypes {
-                release {
-                    signingConfig signingConfigs.debug
-                }
-            }
-        }
-        dependencies {
-            coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
-        }
-        EOF
-        echo "build.gradle başarıyla güncellendi."
+    }
+}
+dependencies {
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
+}
+EOF
+        echo "MainActivity ve build.gradle başarıyla güncellendi."
 
     - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et
       run: |
@@ -149,5 +164,5 @@ jobs:
     - name: 🎁 TEK PAKETTE (APK + TÜM KAYNAK KODLAR) TESLIM ET
       uses: actions/upload-artifact@v4
       with:
-        name: seray_saglik_asistanim_yenia_paket
+        name: seray_saglik_asistanim_yeni_paket
         path: "seray_saglik_asistanim_v*.zip"
