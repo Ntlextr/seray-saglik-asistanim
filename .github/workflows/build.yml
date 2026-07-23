@@ -114,10 +114,14 @@ jobs:
         sed -i "s|<activity|$SERVIS_KODU\n        <activity|g" $MANIFEST_YOL
         echo "Servis kayıtları kusursuz şekilde düzeltildi."
 
-    # 🎨 SENİN PNG RESİMLERİNİ UYGULAMA İKONU VE AÇILIŞ (SPLASH) EKRANI YAPAN ADIM
+    # 🎨 SADECE ANDROID İÇİN İKON VE SPLASH EKRANI ÜRET
     - name: Özel PNG Resimlerini İkon ve Splash Ekranına Dönüştür
       run: |
         cd projem
+        
+        # pubspec.yaml dosyasındaki ios: true satırını otomatik olarak ios: false yapıyoruz
+        sed -i 's/ios: true/ios: false/g' pubspec.yaml
+        
         flutter pub get
         flutter pub run flutter_launcher_icons
         flutter pub run flutter_native_splash:create
@@ -145,5 +149,5 @@ jobs:
     - name: 🎁 TEK PAKETTE (APK + TÜM KAYNAK KODLAR) TESLIM ET
       uses: actions/upload-artifact@v4
       with:
-        name: seray_saglik_asistanim_hafif_paket
+        name: seray_saglik_asistanim_yenia_paket
         path: "seray_saglik_asistanim_v*.zip"
