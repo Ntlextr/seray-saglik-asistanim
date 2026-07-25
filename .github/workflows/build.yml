@@ -86,55 +86,6 @@ jobs:
         print('Tıbbi sınır kontrolleri gözden geçirildi.')
         "
 
-    - name: Profil Kayıt Ekranı Onarımı (Akıllı İkon Tespiti + Geçiş Kodu)
-      run: |
-        python3 -c "
-        import os, re
-
-        file_path = 'projem/lib/screens/profil_kayit_ekrani.dart'
-        if os.path.exists(file_path):
-            with open(file_path, 'r', encoding='utf-8') as f:
-                code = f.read()
-
-            if 'ana_sayfa.dart' not in code:
-                code = 'import \"package:seray_saglik_asistanim/screens/ana_sayfa.dart\";\n' + code
-
-            icon_path = 'assets/images/app_icon.png'
-            for root, dirs, files in os.walk('projem'):
-                for file in files:
-                    if file.lower() == 'app_icon.png':
-                        icon_path = os.path.join(root, file).replace('projem/', '')
-                        break
-
-            logo_code = f'''
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
-                child: Image.asset(
-                  \"{icon_path}\",
-                  height: 75,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.health_and_safety, size: 60, color: Colors.teal),
-                ),
-              ),
-            ),
-            '''
-            
-            if 'app_icon.png' not in code and 'Profil Kaydı' in code:
-                code = code.replace(\"Text('Profil Kaydı'\", logo_code + \"Text('Profil Kaydı'\")
-                code = code.replace('Text(\"Profil Kaydı\"', logo_code + 'Text(\"Profil Kaydı\"')
-
-            nav_code = '\n      if (context.mounted) {\n        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AnaSayfa()));\n      }\n'
-            if 'Navigator.push' not in code and 'Navigator.pushReplacement' not in code:
-                if 'showSnackBar' in code:
-                    code = re.sub(r'(ScaffoldMessenger\.of\(context\)\.showSnackBar\(.*?\);)', r'\1' + nav_code, code, flags=re.DOTALL)
-                else:
-                    code = code.replace('kaydedildi!\'))', 'kaydedildi!\'));' + nav_code)
-
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(code)
-            print('Profil kayit ekranina otomatik ikon ve yonlendirme eklendi.')
-        "
-
     - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et
       run: |
         MANIFEST_YOL="projem/android/app/src/main/AndroidManifest.xml"
@@ -186,6 +137,6 @@ jobs:
     - name: TEK PAKETTE TESLİM ET
       uses: actions/upload-artifact@v4
       with:
-        name: seray_saglik_asistanim_yenitam_paket
+        name: seray_saglik_asistanim_yeni_paket
         path: "seray_saglik_asistanim_v*.zip"
         
