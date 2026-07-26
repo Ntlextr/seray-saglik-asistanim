@@ -93,6 +93,7 @@ jobs:
           sed -i 's/id "dev.flutter.flutter-gradle-plugin" version .*/id "dev.flutter.flutter-gradle-plugin" version "2.5.0" apply false/g' projem/android/settings.gradle
         fi
         sed -i '/android.newDsl/d' projem/android/gradle.properties
+        echo "tasks.whenTaskAdded { task -> if (task.name == 'generateLockfiles') { task.enabled = false } }" >> projem/android/build.gradle
 
     - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et (idempotent)
       run: |
@@ -142,7 +143,7 @@ jobs:
     - name: TEK PAKETTE TESLİM ET
       uses: actions/upload-artifact@v4
       with:
-        name: seray_saglik_asistanim_yeni_paket
+        name: seray_saglik_asistanim_yeeeni_paket
         path: "seray_saglik_asistanim_v*.zip"
         retention-days: 3
         
