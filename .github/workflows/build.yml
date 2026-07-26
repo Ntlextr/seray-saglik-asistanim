@@ -59,32 +59,25 @@ jobs:
         echo "SUPER_VERSION=${NEW_VERSION%+*}" >> $GITHUB_ENV
         echo "Eski Versiyon: $OLD_VERSION -> Yeni Versiyon: $NEW_VERSION"
 
-    - name: Uygulama İsmi, Paket Adı ve MainActivity Düzeltiliyor
+    - name: Uygulama İsmi ve MainActivity Düzeltiliyor
       run: |
         sed -i 's/android:label=".*/android:label="Seray Sağlık Asistanım"/g' projem/android/app/src/main/AndroidManifest.xml
-        
+
         MAIN_DIR="projem/android/app/src/main/kotlin/com/serayteknoloji/saglik_asistanim"
         mkdir -p "$MAIN_DIR"
         printf 'package com.serayteknoloji.saglik_asistanim\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity() {\n}\n' > "$MAIN_DIR/MainActivity.kt"
+        echo "MainActivity güncellendi. build.gradle repodaki haliyle bırakıldı (artık ezilmiyor)."
 
-        printf 'plugins {\n    id "com.android.application"\n    id "kotlin-android"\n    id "dev.flutter.flutter-gradle-plugin"\n}\nandroid {\n    namespace "com.serayteknoloji.saglik_asistanim"\n    compileSdk 36\n    compileOptions {\n        coreLibraryDesugaringEnabled true\n        sourceCompatibility JavaVersion.VERSION_17\n        targetCompatibility JavaVersion.VERSION_17\n    }\n    defaultConfig {\n        applicationId "com.serayteknoloji.saglik_asistanim"\n        minSdkVersion 23\n        targetSdkVersion 36\n        multiDexEnabled true\n    }\n    buildTypes {\n        release {\n            signingConfig signingConfigs.debug\n        }\n    }\n}\ndependencies {\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"\n}\n' > projem/android/app/build.gradle
-        echo "MainActivity and build.gradle updated successfully."
-
-    - name: Tansiyon ve Tıbbi Sınır Algoritması Otomatik Düzeltme
+    - name: Release Keystore ve key.properties Oluşturuluyor
       run: |
-        python3 -c "
-        import os, glob
-        # Projedeki dart dosyalarını tarayıp tansiyon eşik mantığını (140/90 kuralı) güvene alıyoruz
-        for root, dirs, files in os.walk('projem/lib'):
-            for file in files:
-                if file.endswith('.dart'):
-                    path = os.path.join(root, file)
-                    with open(path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                    # Eğer tansiyon hesaplama fonksiyonu varsa ve yanlışlıkla 'Normal' diyorsa python ile müdahale edebiliriz
-                    # Genellikle tansiyon değerleri sistolik > 140 veya diyastolik > 90 ise yüksek olmalıdır.
-        print('Tıbbi sınır kontrolleri gözden geçirildi.')
-        "
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > projem/android/app/seray-release-key.jks
+        cat > projem/android/key.properties <<EOF
+        storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword=${{ secrets.KEY_PASSWORD }}
+        keyAlias=${{ secrets.KEY_ALIAS }}
+        storeFile=app/seray-release-key.jks
+        EOF
+        echo "key.properties oluşturuldu, release build artık gerçek imzayla derlenecek."
 
     - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et
       run: |
@@ -139,4 +132,6 @@ jobs:
       with:
         name: seray_saglik_asistanim_yeni_paket
         path: "seray_saglik_asistanim_v*.zip"
+        retention-days: 3
+
         
