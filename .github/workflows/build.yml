@@ -86,6 +86,9 @@ jobs:
         storeFile=seray-release-key.jks
         EOF
         echo "key.properties oluşturuldu, release build artık gerçek imzayla derlenecek."
+    - name: Android AGP 9 Uyumsuzlugunu Duzelt
+      run: |
+        echo "android.newDsl=false" >> projem/android/gradle.properties
 
     - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et (idempotent)
       run: |
