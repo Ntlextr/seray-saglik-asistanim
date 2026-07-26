@@ -83,7 +83,7 @@ jobs:
         storePassword=${{ secrets.KEYSTORE_PASSWORD }}
         keyPassword=${{ secrets.KEY_PASSWORD }}
         keyAlias=${{ secrets.KEY_ALIAS }}
-        storeFile=app/seray-release-key.jks
+        storeFile=seray-release-key.jks
         EOF
         echo "key.properties oluşturuldu, release build artık gerçek imzayla derlenecek."
 
