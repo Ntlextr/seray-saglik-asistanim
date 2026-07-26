@@ -86,9 +86,16 @@ jobs:
         storeFile=seray-release-key.jks
         EOF
         echo "key.properties oluşturuldu, release build artık gerçek imzayla derlenecek."
-    - name: Android AGP 9 Uyumsuzlugunu Duzelt
+        - name: Flutter Gradle Plugin Sürümünü AGP 9 ile Uyumlu Yap
       run: |
-        echo "android.newDsl=false" >> projem/android/gradle.properties
+        # settings.gradle.kts veya settings.gradle dosyasındaki flutter plugin sürümünü uyumlu hale getirir
+        if [ -f "projem/android/settings.gradle.kts" ]; then
+          sed -i 's/id("dev.flutter.flutter-gradle-plugin") version .*/id("dev.flutter.flutter-gradle-plugin") version "2.5.0" apply false/g' projem/android/settings.gradle.kts
+        elif [ -f "projem/android/settings.gradle" ]; then
+          sed -i 's/id "dev.flutter.flutter-gradle-plugin" version .*/id "dev.flutter.flutter-gradle-plugin" version "2.5.0" apply false/g' projem/android/settings.gradle
+        fi
+        # build.gradle içindeki eski dsl bağımlılığını temizler
+        sed -i '/android.newDsl/d' projem/android/gradle.properties
 
     - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et (idempotent)
       run: |
