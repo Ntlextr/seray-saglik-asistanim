@@ -74,9 +74,7 @@ jobs:
         MAIN_DIR="projem/android/app/src/main/kotlin/com/serayteknoloji/saglik_asistanim"
         mkdir -p "$MAIN_DIR"
         printf 'package com.serayteknoloji.saglik_asistanim\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity() {\n}\n' > "$MAIN_DIR/MainActivity.kt"
-        echo "MainActivity güncellendi. build.gradle repodaki haliyle bırakıldı (artık ezilmiyor)."
-
-    - name: Release Keystore ve key.properties Oluşturuluyor
+        echo "MainActivity güncellendi. build.gradle repodaki haliyle bırakıldı (artık ezilmiyor)."     - name: Release Keystore ve key.properties Oluşturuluyor
       run: |
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > projem/android/app/seray-release-key.jks
         cat > projem/android/key.properties <<EOF
@@ -86,30 +84,25 @@ jobs:
         storeFile=seray-release-key.jks
         EOF
         echo "key.properties oluşturuldu, release build artık gerçek imzayla derlenecek."
-        - name: Flutter Gradle Plugin Sürümünü AGP 9 ile Uyumlu Yap
+
+    - name: Flutter Gradle Plugin Surumunu AGP 9 ile Uyumlu Yap
       run: |
-        # settings.gradle.kts veya settings.gradle dosyasındaki flutter plugin sürümünü uyumlu hale getirir
         if [ -f "projem/android/settings.gradle.kts" ]; then
           sed -i 's/id("dev.flutter.flutter-gradle-plugin") version .*/id("dev.flutter.flutter-gradle-plugin") version "2.5.0" apply false/g' projem/android/settings.gradle.kts
         elif [ -f "projem/android/settings.gradle" ]; then
           sed -i 's/id "dev.flutter.flutter-gradle-plugin" version .*/id "dev.flutter.flutter-gradle-plugin" version "2.5.0" apply false/g' projem/android/settings.gradle
         fi
-        # build.gradle içindeki eski dsl bağımlılığını temizler
         sed -i '/android.newDsl/d' projem/android/gradle.properties
 
     - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et (idempotent)
       run: |
         MANIFEST_YOL="projem/android/app/src/main/AndroidManifest.xml"
-
         sed -i 's/@mipmap\/launcher_icon/@mipmap\/ic_launcher/g' $MANIFEST_YOL
-
-        # Her izni/receiver'ı eklemeden önce zaten var mı diye kontrol ediyoruz - tekrar tekrar eklenmesini (duplicate) önler
         grep -q 'SCHEDULE_EXACT_ALARM' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' $MANIFEST_YOL
         grep -q 'USE_EXACT_ALARM' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' $MANIFEST_YOL
         grep -q 'RECEIVE_BOOT_COMPLETED' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />' $MANIFEST_YOL
         grep -q 'android.permission.VIBRATE' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' $MANIFEST_YOL
         grep -q 'android.permission.WAKE_LOCK' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.WAKE_LOCK" />' $MANIFEST_YOL
-
         if ! grep -q 'ScheduledNotificationReceiver' $MANIFEST_YOL; then
           SERVIS_KODU='<receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" /><receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>'
           sed -i "s|<activity|$SERVIS_KODU\n        <activity|g" $MANIFEST_YOL
@@ -134,18 +127,14 @@ jobs:
       run: |
         cp projem/build/app/outputs/flutter-apk/app-release.apk "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk"
         mkdir -p teslimat_paketi
-
         cp "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk" ./teslimat_paketi/
         cp -r projem/lib ./teslimat_paketi/ 2>/dev/null || true
         cp -r projem/assets ./teslimat_paketi/ 2>/dev/null || true
         cp -r projem/android ./teslimat_paketi/ 2>/dev/null || true
         cp projem/pubspec.yaml ./teslimat_paketi/ 2>/dev/null || true
         cp -r .github ./teslimat_paketi/ 2>/dev/null || true
-
-        # Gizli anahtar dosyalarını teslim paketine ASLA dahil etme
         rm -f ./teslimat_paketi/android/key.properties
         rm -f ./teslimat_paketi/android/app/seray-release-key.jks
-
         cd teslimat_paketi
         zip -r "../seray_saglik_asistanim_v${{ env.SUPER_VERSION }}.zip" .
         cd ..
