@@ -1,3 +1,79 @@
+name: Flutter Build APK from Any ZIP (Seray Saglik Final Fix)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Depoyu Klonla (Checkout)
+      uses: actions/checkout@v4
+
+    - name: Java JDK Kurulumu
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Flutter Kurulumu
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
+    - name: Proje ZIP Dosyasını Otomatik Tespit Et ve Çıkar
+      run: |
+        ZIP_DOSYASI=$(ls *.zip 2>/dev/null | head -n 1)
+        if [ -n "$ZIP_DOSYASI" ]; then
+          echo "Bulunan Proje Paketi: $ZIP_DOSYASI"
+          mkdir -p ham_ayiklama
+          unzip -q "$ZIP_DOSYASI" -d ham_ayiklama
+          if [ -f "ham_ayiklama/pubspec.yaml" ]; then
+            mv ham_ayiklama projem
+          else
+            mkdir -p projem
+            mv ham_ayiklama/* projem/ 2>/dev/null || mv ham_ayiklama projem
+          fi
+          echo "Kaynak dosyalar başarıyla ayıklandı (zip'ten)."
+        elif [ -f "pubspec.yaml" ]; then
+          mkdir -p projem
+          shopt -s dotglob
+          for item in *; do
+            [ "$item" = "projem" ] && continue
+            mv "$item" projem/ 2>/dev/null || true
+          done
+          echo "Kaynak dosyalar doğrudan repodan kullanıldı (zip yok)."
+        else
+          echo "HATA: Ne bir .zip dosyası ne de pubspec.yaml bulundu!"
+          exit 1
+        fi
+
+    - name: Otomatik Sürüm (Version) Artırıcı Yapılandırılıyor
+      run: |
+        cd projem
+        OLD_VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //')
+        BASE_VER=$(echo $OLD_VERSION | cut -d'+' -f1)
+        BUILD_NUM=$(echo $OLD_VERSION | cut -d'+' -f2)
+        NEW_PATCH=$(echo $BASE_VER | cut -d'.' -f3)
+        NEW_PATCH=$((NEW_PATCH + 1))
+        NEW_VERSION="$(echo $BASE_VER | cut -d'.' -f1).$(echo $BASE_VER | cut -d'.' -f2).${NEW_PATCH}+$((BUILD_NUM + 1))"
+        sed -i "s/version: .*/version: ${NEW_VERSION}/g" pubspec.yaml
+        echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+        echo "SUPER_VERSION=${NEW_VERSION%+*}" >> $GITHUB_ENV
+        echo "Eski Versiyon: $OLD_VERSION -> Yeni Versiyon: $NEW_VERSION"
+
+    - name: Uygulama İsmi ve MainActivity Düzeltiliyor
+      run: |
+        sed -i 's/android:label=".*/android:label="Seray Sağlık Asistanım"/g' projem/android/app/src/main/AndroidManifest.xml
+        MAIN_DIR="projem/android/app/src/main/kotlin/com/serayteknoloji/saglik_asistanim"
+        mkdir -p "$MAIN_DIR"
+        printf 'package com.serayteknoloji.saglik_asistanim\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity() {\n}\n' > "$MAIN_DIR/MainActivity.kt"
+        echo "MainActivity güncellendi."
+
     - name: Release Keystore ve key.properties Oluşturuluyor
       run: |
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > projem/android/app/seray-release-key.jks
@@ -7,7 +83,7 @@
         keyAlias=${{ secrets.KEY_ALIAS }}
         storeFile=seray-release-key.jks
         EOF
-        echo "key.properties oluşturuldu, release build artık gerçek imzayla derlenecek."
+        echo "key.properties oluşturuldu."
 
     - name: Flutter Gradle Plugin Surumunu AGP 9 ile Uyumlu Yap
       run: |
@@ -31,7 +107,7 @@
           SERVIS_KODU='<receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" /><receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>'
           sed -i "s|<activity|$SERVIS_KODU\n        <activity|g" $MANIFEST_YOL
         fi
-        echo "Servis kayıtları kontrol edildi (mükerrer eklenmedi)."
+        echo "Servis kayıtları kontrol edildi."
 
     - name: Özel PNG Resimlerini İkon ve Splash Ekranına Dönüştür
       run: |
@@ -66,6 +142,7 @@
     - name: TEK PAKETTE TESLİM ET
       uses: actions/upload-artifact@v4
       with:
-        name: seray_saglik_asistanim_1645yeni_paket
+        name: seray_saglik_asistanim_yeni_paket
         path: "seray_saglik_asistanim_v*.zip"
         retention-days: 3
+        
