@@ -33,13 +33,16 @@ jobs:
           mkdir -p ham_ayiklama
           unzip -q "$ZIP_DOSYASI" -d ham_ayiklama
 
-          if [ -f "ham_ayiklama/pubspec.yaml" ]; then
-            mv ham_ayiklama projem
-          else
-            mkdir -p projem
-            mv ham_ayiklama/* projem/ 2>/dev/null || mv ham_ayiklama projem
+          # pubspec.yaml'ı klasör yapısı ne olursa olsun (kat kat iç içe de olsa) otomatik bul
+          PUBSPEC_YOLU=$(find ham_ayiklama -maxdepth 4 -name "pubspec.yaml" | head -n 1)
+          if [ -z "$PUBSPEC_YOLU" ]; then
+            echo "HATA: ZIP içinde hiçbir yerde pubspec.yaml bulunamadı!"
+            find ham_ayiklama -maxdepth 3
+            exit 1
           fi
-          echo "Kaynak dosyalar başarıyla ayıklandı (zip'ten)."
+          KAYNAK_KLASOR=$(dirname "$PUBSPEC_YOLU")
+          mv "$KAYNAK_KLASOR" projem
+          echo "Kaynak dosyalar başarıyla ayıklandı. (Bulunduğu yol: $PUBSPEC_YOLU)"
         elif [ -f "pubspec.yaml" ]; then
           mkdir -p projem
           shopt -s dotglob
@@ -140,10 +143,13 @@ jobs:
         zip -r "../seray_saglik_asistanim_v${{ env.SUPER_VERSION }}.zip" .
         cd ..
 
+    - name: Tarih ve Saat Damgası Oluşturuluyor
+      run: echo "TARIH_SAAT=$(TZ='Europe/Istanbul' date +'%d_%m_%Y_%H%M')" >> $GITHUB_ENV
+
     - name: TEK PAKETTE TESLİM ET
       uses: actions/upload-artifact@v4
       with:
-        name: seray_saglik_asistanim_yeniiii_paket
+        name: seray_saglik_asistanim_${{ env.TARIH_SAAT }}
         path: "seray_saglik_asistanim_v*.zip"
         retention-days: 3
         
