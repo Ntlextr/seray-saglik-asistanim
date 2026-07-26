@@ -27,21 +27,29 @@ jobs:
 
     - name: Proje ZIP Dosyasını Otomatik Tespit Et ve Çıkar
       run: |
-        ZIP_DOSYASI=$(ls *.zip | head -n 1)
+        ZIP_DOSYASI=$(ls *.zip 2>/dev/null | head -n 1)
         if [ -n "$ZIP_DOSYASI" ]; then
           echo "Bulunan Proje Paketi: $ZIP_DOSYASI"
           mkdir -p ham_ayiklama
           unzip -q "$ZIP_DOSYASI" -d ham_ayiklama
-          
+
           if [ -f "ham_ayiklama/pubspec.yaml" ]; then
             mv ham_ayiklama projem
           else
             mkdir -p projem
             mv ham_ayiklama/* projem/ 2>/dev/null || mv ham_ayiklama projem
           fi
-          echo "Kaynak dosyalar başarıyla ayıklandı."
+          echo "Kaynak dosyalar başarıyla ayıklandı (zip'ten)."
+        elif [ -f "pubspec.yaml" ]; then
+          mkdir -p projem
+          shopt -s dotglob
+          for item in *; do
+            [ "$item" = "projem" ] && continue
+            mv "$item" projem/ 2>/dev/null || true
+          done
+          echo "Kaynak dosyalar doğrudan repodan kullanıldı (zip yok)."
         else
-          echo "HATA: Ana dizinde hiçbir .zip dosyası bulunamadı!"
+          echo "HATA: Ne bir .zip dosyası ne de pubspec.yaml bulundu!"
           exit 1
         fi
 
@@ -79,21 +87,24 @@ jobs:
         EOF
         echo "key.properties oluşturuldu, release build artık gerçek imzayla derlenecek."
 
-    - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et
+    - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et (idempotent)
       run: |
         MANIFEST_YOL="projem/android/app/src/main/AndroidManifest.xml"
-        
+
         sed -i 's/@mipmap\/launcher_icon/@mipmap\/ic_launcher/g' $MANIFEST_YOL
-        
-        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' $MANIFEST_YOL
-        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' $MANIFEST_YOL
-        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />' $MANIFEST_YOL
-        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' $MANIFEST_YOL
-        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.WAKE_LOCK" />' $MANIFEST_YOL
-        
-        SERVIS_KODU='<receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" /><receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>'
-        sed -i "s|<activity|$SERVIS_KODU\n        <activity|g" $MANIFEST_YOL
-        echo "Servis kayıtları kusursuz şekilde düzeltildi."
+
+        # Her izni/receiver'ı eklemeden önce zaten var mı diye kontrol ediyoruz - tekrar tekrar eklenmesini (duplicate) önler
+        grep -q 'SCHEDULE_EXACT_ALARM' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' $MANIFEST_YOL
+        grep -q 'USE_EXACT_ALARM' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' $MANIFEST_YOL
+        grep -q 'RECEIVE_BOOT_COMPLETED' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />' $MANIFEST_YOL
+        grep -q 'android.permission.VIBRATE' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' $MANIFEST_YOL
+        grep -q 'android.permission.WAKE_LOCK' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.WAKE_LOCK" />' $MANIFEST_YOL
+
+        if ! grep -q 'ScheduledNotificationReceiver' $MANIFEST_YOL; then
+          SERVIS_KODU='<receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" /><receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>'
+          sed -i "s|<activity|$SERVIS_KODU\n        <activity|g" $MANIFEST_YOL
+        fi
+        echo "Servis kayıtları kontrol edildi (mükerrer eklenmedi)."
 
     - name: Özel PNG Resimlerini İkon ve Splash Ekranına Dönüştür
       run: |
@@ -113,16 +124,18 @@ jobs:
       run: |
         cp projem/build/app/outputs/flutter-apk/app-release.apk "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk"
         mkdir -p teslimat_paketi
-        
+
         cp "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk" ./teslimat_paketi/
         cp -r projem/lib ./teslimat_paketi/ 2>/dev/null || true
         cp -r projem/assets ./teslimat_paketi/ 2>/dev/null || true
-        cp -r projem/Assets ./teslimat_paketi/ 2>/dev/null || true
-        cp -r projem/images ./teslimat_paketi/ 2>/dev/null || true
         cp -r projem/android ./teslimat_paketi/ 2>/dev/null || true
         cp projem/pubspec.yaml ./teslimat_paketi/ 2>/dev/null || true
         cp -r .github ./teslimat_paketi/ 2>/dev/null || true
-        
+
+        # Gizli anahtar dosyalarını teslim paketine ASLA dahil etme
+        rm -f ./teslimat_paketi/android/key.properties
+        rm -f ./teslimat_paketi/android/app/seray-release-key.jks
+
         cd teslimat_paketi
         zip -r "../seray_saglik_asistanim_v${{ env.SUPER_VERSION }}.zip" .
         cd ..
@@ -133,5 +146,4 @@ jobs:
         name: seray_saglik_asistanim_yeni_paket
         path: "seray_saglik_asistanim_v*.zip"
         retention-days: 3
-
         
