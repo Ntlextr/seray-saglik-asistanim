@@ -82,12 +82,11 @@ jobs:
     - name: Release Keystore ve key.properties Oluşturuluyor
       run: |
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > projem/android/app/seray-release-key.jks
-        cat > projem/android/key.properties <<EOF
-        storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-        keyPassword=${{ secrets.KEY_PASSWORD }}
-        keyAlias=${{ secrets.KEY_ALIAS }}
-        storeFile=seray-release-key.jks
-        EOF
+        rm -f projem/android/key.properties
+        echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> projem/android/key.properties
+        echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> projem/android/key.properties
+        echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> projem/android/key.properties
+        echo "storeFile=seray-release-key.jks" >> projem/android/key.properties
         echo "key.properties oluşturuldu, release build artık gerçek imzayla derlenecek."
 
     - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et (idempotent)
