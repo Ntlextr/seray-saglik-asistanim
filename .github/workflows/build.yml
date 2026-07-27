@@ -156,3 +156,4 @@ jobs:
         name: seray_saglik_asistanim_${{ env.TARIH_SAAT }}
         path: "seray_saglik_asistanim_v*.zip"
         retention-days: 3
+        
