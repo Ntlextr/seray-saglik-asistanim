@@ -81,6 +81,7 @@ jobs:
 
     - name: Release Keystore ve key.properties Olusturuluyor
       run: |
+        mkdir -p projem/android/app
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > projem/android/app/seray-release-key.jks
         echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > projem/android/key.properties
         echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> projem/android/key.properties
