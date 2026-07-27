@@ -79,15 +79,16 @@ jobs:
         printf 'package com.serayteknoloji.saglik_asistanim\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity() {\n}\n' > "$MAIN_DIR/MainActivity.kt"
         echo "MainActivity güncellendi. build.gradle repodaki haliyle bırakıldı (artık ezilmiyor)."
 
-    - name: Release Keystore ve key.properties Oluşturuluyor
+   - name: Release Keystore ve key.properties Oluşturuluyor
       run: |
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > projem/android/app/seray-release-key.jks
-        rm -f projem/android/key.properties
-        echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> projem/android/key.properties
-        echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> projem/android/key.properties
-        echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> projem/android/key.properties
-        echo "storeFile=seray-release-key.jks" >> projem/android/key.properties
-        echo "key.properties oluşturuldu, release build artık gerçek imzayla derlenecek."
+        cat << 'EOF' > projem/android/key.properties
+        storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword=${{ secrets.KEY_PASSWORD }}
+        keyAlias=${{ secrets.KEY_ALIAS }}
+        storeFile=seray-release-key.jks
+        EOF
+        echo "key.properties oluşturuldu."
 
     - name: Crash Çökme Engelleyici Servisleri Manifest'e Enjekte Et (idempotent)
       run: |
