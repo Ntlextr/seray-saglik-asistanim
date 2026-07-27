@@ -80,12 +80,17 @@ jobs:
         echo "MainActivity güncellendi. build.gradle repodaki haliyle bırakıldı (artık ezilmiyor)."
 
     - name: Release Keystore ve key.properties Oluşturuluyor
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > projem/android/app/seray-release-key.jks
+        echo "$KEYSTORE_BASE64" | base64 --decode > projem/android/app/seray-release-key.jks
         rm -f projem/android/key.properties
-        echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> projem/android/key.properties
-        echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> projem/android/key.properties
-        echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> projem/android/key.properties
+        echo "storePassword=$KEYSTORE_PASSWORD" >> projem/android/key.properties
+        echo "keyPassword=$KEY_PASSWORD" >> projem/android/key.properties
+        echo "keyAlias=$KEY_ALIAS" >> projem/android/key.properties
         echo "storeFile=seray-release-key.jks" >> projem/android/key.properties
         echo "key.properties oluşturuldu, release build artık gerçek imzayla derlenecek."
 
@@ -151,4 +156,3 @@ jobs:
         name: seray_saglik_asistanim_${{ env.TARIH_SAAT }}
         path: "seray_saglik_asistanim_v*.zip"
         retention-days: 3
-        
