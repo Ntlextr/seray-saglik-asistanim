@@ -153,7 +153,7 @@ jobs:
     - name: TEK PAKETTE TESLİM ET
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.TARIH_SAAT }}_seray_saglik_asistanim_$
+        name: ${{ env.TARIH_SAAT }}_seray_saglik_asistanim
         path: "seray_saglik_asistanim_v*.zip"
         retention-days: 3
         
