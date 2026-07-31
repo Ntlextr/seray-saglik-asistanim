@@ -98,11 +98,12 @@ jobs:
       run: |
         MANIFEST_YOL="projem/android/app/src/main/AndroidManifest.xml"
 
-        sed -i 's/@mipmap\/launcher_icon/@mipmap\/ic_launcher/g' $MANIFEST_YOL
+        # (İkon adı zaten doğru: launcher_icon — burada değiştirmiyoruz.)
 
         # Her izni/receiver'ı eklemeden önce zaten var mı diye kontrol ediyoruz - tekrar tekrar eklenmesini (duplicate) önler
         grep -q 'SCHEDULE_EXACT_ALARM' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' $MANIFEST_YOL
-        grep -q 'USE_EXACT_ALARM' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' $MANIFEST_YOL
+        # NOT: USE_EXACT_ALARM kasıtlı olarak eklenmiyor — SCHEDULE_EXACT_ALARM ile çakışıp
+        # sistemin izin ekranını gizliyordu (bkz. alarm/izin düzeltmeleri).
         grep -q 'RECEIVE_BOOT_COMPLETED' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />' $MANIFEST_YOL
         grep -q 'android.permission.VIBRATE' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' $MANIFEST_YOL
         grep -q 'android.permission.WAKE_LOCK' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.WAKE_LOCK" />' $MANIFEST_YOL
@@ -125,7 +126,6 @@ jobs:
       run: |
         cd projem
         flutter clean
-        rm -rf ~/.pub-cache/hosted/pub.dev/syncfusion_flutter_pdf-* ~/.pub-cache/hosted/pub.dev/syncfusion_flutter_core-*
         flutter pub get
         flutter build apk --release
 
@@ -158,5 +158,4 @@ jobs:
         name: ${{ env.TARIH_SAAT }}_seray_saglik_asistanim
         path: "seray_saglik_asistanim_v*.zip"
         retention-days: 3
-
         
