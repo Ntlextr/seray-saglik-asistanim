@@ -125,7 +125,7 @@ jobs:
       run: |
         cd projem
         flutter clean
-        flutter pub cache repair
+        rm -rf ~/.pub-cache/hosted/pub.dev/syncfusion_flutter_pdf-* ~/.pub-cache/hosted/pub.dev/syncfusion_flutter_core-*
         flutter pub get
         flutter build apk --release
 
