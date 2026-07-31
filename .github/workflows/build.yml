@@ -125,20 +125,35 @@ jobs:
       run: |
         cd projem
         flutter clean
+        flutter pub get
         flutter build apk --release
+
+    - name: Tüm Kodları ve Klasörleri ZIP Paketi Yap
+      run: |
+        cp projem/build/app/outputs/flutter-apk/app-release.apk "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk"
+        mkdir -p teslimat_paketi
+
+        cp "./Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk" ./teslimat_paketi/
+        cp -r projem/lib ./teslimat_paketi/ 2>/dev/null || true
+        cp -r projem/assets ./teslimat_paketi/ 2>/dev/null || true
+        cp -r projem/android ./teslimat_paketi/ 2>/dev/null || true
+        cp projem/pubspec.yaml ./teslimat_paketi/ 2>/dev/null || true
+        cp -r .github ./teslimat_paketi/ 2>/dev/null || true
+
+        # Gizli anahtar dosyalarını teslim paketine ASLA dahil etme
+        rm -f ./teslimat_paketi/android/key.properties
+        rm -f ./teslimat_paketi/android/app/seray-release-key.jks
+
+        cd teslimat_paketi
+        zip -r "../seray_saglik_asistanim_v${{ env.SUPER_VERSION }}.zip" .
+        cd ..
 
     - name: Tarih ve Saat Damgası Oluşturuluyor
       run: echo "TARIH_SAAT=$(TZ='Europe/Istanbul' date +'%d_%m_%Y_%H%M')" >> $GITHUB_ENV
 
-    - name: APK'yı Sürüm Numarasıyla Yeniden Adlandır
-      run: |
-        cp projem/build/app/outputs/flutter-apk/app-release.apk "./${{ env.TARIH_SAAT }}_Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk"
-
-    - name: SADECE APK'YI TESLİM ET
+    - name: TEK PAKETTE TESLİM ET
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.TARIH_SAAT }}_Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}
-        path: "${{ env.TARIH_SAAT }}_Seray_Saglik_Asistanim_v${{ env.SUPER_VERSION }}.apk"
+        name: ${{ env.TARIH_SAAT }}_seray_saglik_asistanim
+        path: "seray_saglik_asistanim_v*.zip"
         retention-days: 3
-
-        
