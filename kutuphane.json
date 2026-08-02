@@ -1,5 +1,65 @@
 [
   {
+    "baslik": "Diyabet Nedir?",
+    "gorsel_url": "",
+    "aciklama": "Diyabet, vücudun kan şekerini (glikozu) düzenleyememesi sonucu oluşan kronik bir durumdur. Pankreas ya yeterli insülin üretemez ya da vücut ürettiği insülini etkili kullanamaz. Düzenli takip ve doğru yaşam tarzıyla kontrol altında tutulabilir.",
+    "kategori": "Diyabet"
+  },
+  {
+    "baslik": "Tip 1 ve Tip 2 Diyabet Arasındaki Fark",
+    "gorsel_url": "",
+    "aciklama": "Tip 1 diyabette vücut hiç insülin üretemez, genellikle çocukluk/gençlik döneminde ortaya çıkar ve insülin tedavisi gerektirir. Tip 2 diyabette vücut insülini yeterince kullanamaz, genellikle yetişkinlikte gelişir ve yaşam tarzı + ilaçla yönetilebilir.",
+    "kategori": "Diyabet"
+  },
+  {
+    "baslik": "Gestasyonel Diyabet (Gebelik Şekeri) Nedir?",
+    "gorsel_url": "",
+    "aciklama": "Gestasyonel diyabet, bazı kadınlarda hamilelik sırasında ortaya çıkan geçici bir kan şekeri yüksekliğidir. Genellikle doğumdan sonra düzelir, ancak ileride Tip 2 diyabet riskini artırabileceğinden doğum sonrası takip önemlidir.",
+    "kategori": "Diyabet"
+  },
+  {
+    "baslik": "Diyabetin Erken Belirtileri Nelerdir?",
+    "gorsel_url": "",
+    "aciklama": "Sık idrara çıkma, aşırı susama, açıklanamayan kilo kaybı, sürekli yorgunluk, bulanık görme ve yaraların yavaş iyileşmesi diyabetin sık görülen erken belirtilerindendir. Bu belirtileri fark edenlerin bir sağlık kuruluşuna başvurması önerilir.",
+    "kategori": "Diyabet"
+  },
+  {
+    "baslik": "Diyabet İçin Risk Faktörleri Nelerdir?",
+    "gorsel_url": "",
+    "aciklama": "Ailede diyabet öyküsü, fazla kilo/obezite, hareketsiz yaşam tarzı, ileri yaş, yüksek tansiyon ve daha önce gestasyonel diyabet geçirmiş olmak, Tip 2 diyabet riskini artıran başlıca faktörlerdir.",
+    "kategori": "Diyabet"
+  },
+  {
+    "baslik": "Evde Kan Şekeri Testi Nasıl Yapılır?",
+    "gorsel_url": "",
+    "aciklama": "Eller yıkanıp kurulandıktan sonra, glukometre cihazına takılan test şeridine parmak ucundan alınan küçük bir kan damlası damlatılır. Cihaz birkaç saniye içinde sonucu gösterir. Doğru zamanlama (açlık/tokluk) doktorunuzun belirlediği plana göre olmalıdır.",
+    "kategori": "Diyabet"
+  },
+  {
+    "baslik": "Hipoglisemi (Düşük Kan Şekeri) Belirtileri",
+    "gorsel_url": "",
+    "aciklama": "Titreme, terleme, çarpıntı, ani açlık hissi, baş dönmesi ve kafa karışıklığı düşük kan şekerinin işaretleri olabilir. Böyle bir durumda hızlı emilen bir şeker kaynağı (meyve suyu, şeker) almak ve kısa süre sonra kan şekerini tekrar ölçmek önerilir. Belirtiler geçmez veya ağırlaşırsa acil tıbbi yardım alınmalıdır.",
+    "kategori": "Diyabet"
+  },
+  {
+    "baslik": "Hiperglisemi (Yüksek Kan Şekeri) Ne Zaman Ciddiye Alınmalı?",
+    "gorsel_url": "",
+    "aciklama": "Aşırı susama, sık idrara çıkma, yorgunluk ve bulanık görme yüksek kan şekerinin belirtileri olabilir. Değerler doktorunuzun belirttiği sınırların belirgin şekilde üzerindeyse veya bu belirtiler eşlik ediyorsa vakit kaybetmeden bir sağlık kuruluşuna başvurulmalıdır.",
+    "kategori": "Diyabet"
+  },
+  {
+    "baslik": "Diyabetin Olası Komplikasyonları",
+    "gorsel_url": "",
+    "aciklama": "Uzun süre kontrolsüz kalan diyabet; kalp-damar hastalıkları, böbrek sorunları, göz (retina) hasarı, sinir hasarı ve ayak yaralarında iyileşme güçlüğü gibi komplikasyonlara yol açabilir. Düzenli takip bu riskleri azaltmada önemli rol oynar.",
+    "kategori": "Diyabet"
+  },
+  {
+    "baslik": "Diyabetle Günlük Yaşamda Nelere Dikkat Edilmeli?",
+    "gorsel_url": "",
+    "aciklama": "Düzenli kan şekeri takibi, dengeli beslenme, düzenli fiziksel aktivite, ilaç/insülin planına uyum, ayak bakımına özen ve düzenli doktor kontrolleri diyabetle sağlıklı bir yaşam sürmenin temel taşlarıdır.",
+    "kategori": "Diyabet"
+  },
+  {
     "baslik": "Tansiyon (Kan Basıncı) Kategorileri",
     "gorsel_url": "",
     "aciklama": "Normal: 120/80 mmHg altı. Yüksek Normal: 120-129 / 80 altı. Evre 1 Hipertansiyon: 130-139 / 80-89. Evre 2 Hipertansiyon: 140/90 ve üzeri. Bu değerler genel bilgi amaçlıdır; kendi durumunuz için doktorunuza danışın.",
@@ -21,12 +81,6 @@
     "baslik": "HbA1c Nedir?",
     "gorsel_url": "",
     "aciklama": "HbA1c, son 2-3 aylık ortalama kan şekeri düzeyinizi gösteren bir kan testidir. Günlük ölçümlerden farklı olarak uzun vadeli gidişatı yansıtır. Diyabet takibinde doktorlar tarafından sıkça kullanılır.",
-    "kategori": "Şeker"
-  },
-  {
-    "baslik": "Tip 1 ve Tip 2 Diyabet Arasındaki Fark",
-    "gorsel_url": "",
-    "aciklama": "Tip 1 diyabette vücut hiç insülin üretemez, genellikle çocukluk/gençlik döneminde ortaya çıkar ve insülin tedavisi gerektirir. Tip 2 diyabette vücut insülini yeterince kullanamaz, genellikle yetişkinlikte gelişir ve yaşam tarzı + ilaçla yönetilebilir.",
     "kategori": "Şeker"
   }
 ]
