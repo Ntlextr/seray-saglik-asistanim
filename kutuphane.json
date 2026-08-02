@@ -1,0 +1,32 @@
+[
+  {
+    "baslik": "Tansiyon (Kan Basıncı) Kategorileri",
+    "gorsel_url": "",
+    "aciklama": "Normal: 120/80 mmHg altı. Yüksek Normal: 120-129 / 80 altı. Evre 1 Hipertansiyon: 130-139 / 80-89. Evre 2 Hipertansiyon: 140/90 ve üzeri. Bu değerler genel bilgi amaçlıdır; kendi durumunuz için doktorunuza danışın.",
+    "kategori": "Tansiyon"
+  },
+  {
+    "baslik": "Büyük (Sistolik) ve Küçük (Diyastolik) Tansiyon Nedir?",
+    "gorsel_url": "",
+    "aciklama": "Büyük tansiyon (sistolik), kalbin kan pompaladığı andaki basıncı; küçük tansiyon (diyastolik) ise kalbin iki atım arasında dinlendiği andaki basıncı gösterir. İkisi birlikte kalp-damar sağlığınız hakkında fikir verir.",
+    "kategori": "Tansiyon"
+  },
+  {
+    "baslik": "Kan Şekeri Değerleri Ne Anlama Gelir?",
+    "gorsel_url": "",
+    "aciklama": "Açlık kan şekeri genel olarak 70-99 mg/dL normal kabul edilir. Tokluk (yemekten 2 saat sonra) için 140 mg/dL altı hedeflenir. Bu aralıklar kişiden kişiye değişebilir; doktorunuzun size özel belirlediği hedef değerleri esas alın.",
+    "kategori": "Şeker"
+  },
+  {
+    "baslik": "HbA1c Nedir?",
+    "gorsel_url": "",
+    "aciklama": "HbA1c, son 2-3 aylık ortalama kan şekeri düzeyinizi gösteren bir kan testidir. Günlük ölçümlerden farklı olarak uzun vadeli gidişatı yansıtır. Diyabet takibinde doktorlar tarafından sıkça kullanılır.",
+    "kategori": "Şeker"
+  },
+  {
+    "baslik": "Tip 1 ve Tip 2 Diyabet Arasındaki Fark",
+    "gorsel_url": "",
+    "aciklama": "Tip 1 diyabette vücut hiç insülin üretemez, genellikle çocukluk/gençlik döneminde ortaya çıkar ve insülin tedavisi gerektirir. Tip 2 diyabette vücut insülini yeterince kullanamaz, genellikle yetişkinlikte gelişir ve yaşam tarzı + ilaçla yönetilebilir.",
+    "kategori": "Şeker"
+  }
+]
