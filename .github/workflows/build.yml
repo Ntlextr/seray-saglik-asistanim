@@ -27,7 +27,7 @@ jobs:
 
     - name: Proje ZIP Dosyasını Otomatik Tespit Et ve Çıkar
       run: |
-        ZIP_DOSYASI=$(ls *.zip 2>/dev/null | head -n 1)
+        ZIP_DOSYASI=$(ls -t *.zip 2>/dev/null | head -n 1)
         if [ -n "$ZIP_DOSYASI" ]; then
           echo "Bulunan Proje Paketi: $ZIP_DOSYASI"
           mkdir -p ham_ayiklama
@@ -76,8 +76,10 @@ jobs:
 
         MAIN_DIR="projem/android/app/src/main/kotlin/com/serayteknoloji/saglik_asistanim"
         mkdir -p "$MAIN_DIR"
-        printf 'package com.serayteknoloji.saglik_asistanim\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity() {\n}\n' > "$MAIN_DIR/MainActivity.kt"
-        echo "MainActivity güncellendi. build.gradle repodaki haliyle bırakıldı (artık ezilmiyor)."
+        # ÖNEMLİ: local_auth (parmak izi) paketi FlutterActivity'yi DEĞİL,
+        # FlutterFragmentActivity'yi gerektiriyor.
+        printf 'package com.serayteknoloji.saglik_asistanim\n\nimport io.flutter.embedding.android.FlutterFragmentActivity\n\nclass MainActivity: FlutterFragmentActivity() {\n}\n' > "$MAIN_DIR/MainActivity.kt"
+        echo "MainActivity güncellendi (FlutterFragmentActivity — parmak izi desteği için)."
 
     - name: Release Keystore ve key.properties Oluşturuluyor
       env:
@@ -158,4 +160,3 @@ jobs:
         name: ${{ env.TARIH_SAAT }}_seray_saglik_asistanim
         path: "seray_saglik_asistanim_v*.zip"
         retention-days: 3
-        
