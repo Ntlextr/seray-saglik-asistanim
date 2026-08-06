@@ -27,13 +27,12 @@ jobs:
 
     - name: Proje ZIP Dosyasını Otomatik Tespit Et ve Çıkar
       run: |
-        ZIP_DOSYASI=$(ls -t *.zip 2>/dev/null | head -n 1)
+        ZIP_DOSYASI=$(ls *.zip 2>/dev/null | head -n 1)
         if [ -n "$ZIP_DOSYASI" ]; then
           echo "Bulunan Proje Paketi: $ZIP_DOSYASI"
           mkdir -p ham_ayiklama
           unzip -q "$ZIP_DOSYASI" -d ham_ayiklama
 
-          # pubspec.yaml'ı klasör yapısı ne olursa olsun (kat kat iç içe de olsa) otomatik bul
           PUBSPEC_YOLU=$(find ham_ayiklama -maxdepth 4 -name "pubspec.yaml" | head -n 1)
           if [ -z "$PUBSPEC_YOLU" ]; then
             echo "HATA: ZIP içinde hiçbir yerde pubspec.yaml bulunamadı!"
@@ -70,16 +69,10 @@ jobs:
         echo "SUPER_VERSION=${NEW_VERSION%+*}" >> $GITHUB_ENV
         echo "Eski Versiyon: $OLD_VERSION -> Yeni Versiyon: $NEW_VERSION"
 
-    - name: Uygulama İsmi ve MainActivity Düzeltiliyor
+    - name: Uygulama İsmi Düzeltiliyor
       run: |
         sed -i 's/android:label=".*/android:label="Seray Sağlık Asistanım"/g' projem/android/app/src/main/AndroidManifest.xml
-
-        MAIN_DIR="projem/android/app/src/main/kotlin/com/serayteknoloji/saglik_asistanim"
-        mkdir -p "$MAIN_DIR"
-        # ÖNEMLİ: local_auth (parmak izi) paketi FlutterActivity'yi DEĞİL,
-        # FlutterFragmentActivity'yi gerektiriyor.
-        printf 'package com.serayteknoloji.saglik_asistanim\n\nimport io.flutter.embedding.android.FlutterFragmentActivity\n\nclass MainActivity: FlutterFragmentActivity() {\n}\n' > "$MAIN_DIR/MainActivity.kt"
-        echo "MainActivity güncellendi (FlutterFragmentActivity — parmak izi desteği için)."
+        echo "Uygulama ismi güncellendi, MainActivity.kt kaynak haliyle korundu."
 
     - name: Release Keystore ve key.properties Oluşturuluyor
       env:
@@ -100,12 +93,7 @@ jobs:
       run: |
         MANIFEST_YOL="projem/android/app/src/main/AndroidManifest.xml"
 
-        # (İkon adı zaten doğru: launcher_icon — burada değiştirmiyoruz.)
-
-        # Her izni/receiver'ı eklemeden önce zaten var mı diye kontrol ediyoruz - tekrar tekrar eklenmesini (duplicate) önler
         grep -q 'SCHEDULE_EXACT_ALARM' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' $MANIFEST_YOL
-        # NOT: USE_EXACT_ALARM kasıtlı olarak eklenmiyor — SCHEDULE_EXACT_ALARM ile çakışıp
-        # sistemin izin ekranını gizliyordu (bkz. alarm/izin düzeltmeleri).
         grep -q 'RECEIVE_BOOT_COMPLETED' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />' $MANIFEST_YOL
         grep -q 'android.permission.VIBRATE' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' $MANIFEST_YOL
         grep -q 'android.permission.WAKE_LOCK' $MANIFEST_YOL || sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.WAKE_LOCK" />' $MANIFEST_YOL
@@ -143,7 +131,6 @@ jobs:
         cp projem/pubspec.yaml ./teslimat_paketi/ 2>/dev/null || true
         cp -r .github ./teslimat_paketi/ 2>/dev/null || true
 
-        # Gizli anahtar dosyalarını teslim paketine ASLA dahil etme
         rm -f ./teslimat_paketi/android/key.properties
         rm -f ./teslimat_paketi/android/app/seray-release-key.jks
 
@@ -158,5 +145,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.TARIH_SAAT }}_seray_saglik_asistanim
-        path: "seray_saglik_asistanim_v*.zip"
+        path: "new_seray_saglik_asistanim_v*.zip"
         retention-days: 3
