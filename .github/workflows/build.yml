@@ -145,5 +145,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.TARIH_SAAT }}_seray_saglik_asistanim
-        path: "new_seray_saglik_asistanim_v*.zip"
+        path: "yeni_seray_saglik_asistanim_v*.zip"
         retention-days: 3
