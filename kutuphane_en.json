@@ -1,0 +1,86 @@
+[
+  {
+    "baslik": "What Is Diabetes?",
+    "gorsel_url": "",
+    "aciklama": "Diabetes is a chronic condition that occurs when the body cannot regulate blood sugar (glucose). Either the pancreas doesn't produce enough insulin, or the body can't use the insulin it produces effectively. It can be kept under control with regular monitoring and the right lifestyle.",
+    "kategori": "Diabetes"
+  },
+  {
+    "baslik": "The Difference Between Type 1 and Type 2 Diabetes",
+    "gorsel_url": "",
+    "aciklama": "In Type 1 diabetes, the body produces no insulin at all; it usually appears in childhood or adolescence and requires insulin treatment. In Type 2 diabetes, the body can't use insulin effectively; it usually develops in adulthood and can be managed with lifestyle changes and medication.",
+    "kategori": "Diabetes"
+  },
+  {
+    "baslik": "What Is Gestational Diabetes?",
+    "gorsel_url": "",
+    "aciklama": "Gestational diabetes is a temporary rise in blood sugar that some women develop during pregnancy. It usually resolves after delivery, but since it can raise the future risk of Type 2 diabetes, follow-up after birth is important.",
+    "kategori": "Diabetes"
+  },
+  {
+    "baslik": "What Are the Early Signs of Diabetes?",
+    "gorsel_url": "",
+    "aciklama": "Frequent urination, excessive thirst, unexplained weight loss, constant fatigue, blurred vision, and slow-healing wounds are common early signs of diabetes. Anyone noticing these signs is advised to see a healthcare provider.",
+    "kategori": "Diabetes"
+  },
+  {
+    "baslik": "What Are the Risk Factors for Diabetes?",
+    "gorsel_url": "",
+    "aciklama": "A family history of diabetes, being overweight or obese, a sedentary lifestyle, older age, high blood pressure, and a past history of gestational diabetes are the main factors that increase the risk of Type 2 diabetes.",
+    "kategori": "Diabetes"
+  },
+  {
+    "baslik": "How to Test Blood Sugar at Home",
+    "gorsel_url": "",
+    "aciklama": "After washing and drying your hands, a small drop of blood from a fingertip is placed on a test strip inserted into a glucometer. The device shows the result within seconds. The right timing (fasting/after a meal) should follow the plan set by your doctor.",
+    "kategori": "Diabetes"
+  },
+  {
+    "baslik": "Signs of Hypoglycemia (Low Blood Sugar)",
+    "gorsel_url": "",
+    "aciklama": "Shakiness, sweating, palpitations, sudden hunger, dizziness, and confusion can be signs of low blood sugar. In such a case, it's recommended to take a fast-acting source of sugar (fruit juice, sugar) and re-check your blood sugar shortly after. If symptoms don't improve or get worse, seek emergency medical help.",
+    "kategori": "Diabetes"
+  },
+  {
+    "baslik": "When Should High Blood Sugar (Hyperglycemia) Be Taken Seriously?",
+    "gorsel_url": "",
+    "aciklama": "Excessive thirst, frequent urination, fatigue, and blurred vision can be signs of high blood sugar. If your levels are clearly above the limits set by your doctor, or if these symptoms are present, see a healthcare provider without delay.",
+    "kategori": "Diabetes"
+  },
+  {
+    "baslik": "Possible Complications of Diabetes",
+    "gorsel_url": "",
+    "aciklama": "Diabetes left uncontrolled for a long time can lead to complications such as cardiovascular disease, kidney problems, eye (retinal) damage, nerve damage, and slow-healing foot wounds. Regular monitoring plays an important role in reducing these risks.",
+    "kategori": "Diabetes"
+  },
+  {
+    "baslik": "What to Watch for in Daily Life With Diabetes",
+    "gorsel_url": "",
+    "aciklama": "Regular blood sugar monitoring, balanced nutrition, regular physical activity, sticking to your medication/insulin plan, careful foot care, and regular doctor check-ups are the cornerstones of living well with diabetes.",
+    "kategori": "Diabetes"
+  },
+  {
+    "baslik": "Blood Pressure Categories",
+    "gorsel_url": "",
+    "aciklama": "Normal: below 120/80 mmHg. Elevated: 120-129 / below 80. Stage 1 Hypertension: 130-139 / 80-89. Stage 2 Hypertension: 140/90 and above. These figures are for general information only; consult your doctor about your own situation.",
+    "kategori": "Blood Pressure"
+  },
+  {
+    "baslik": "What Are Systolic and Diastolic Blood Pressure?",
+    "gorsel_url": "",
+    "aciklama": "Systolic pressure is the pressure in your arteries when your heart pumps blood; diastolic pressure is the pressure when your heart rests between beats. Together they give a picture of your cardiovascular health.",
+    "kategori": "Blood Pressure"
+  },
+  {
+    "baslik": "What Do Blood Sugar Values Mean?",
+    "gorsel_url": "",
+    "aciklama": "Fasting blood sugar is generally considered normal between 70-99 mg/dL. After a meal (2 hours later), the target is usually below 140 mg/dL. These ranges can vary from person to person; follow the target values your doctor has set specifically for you.",
+    "kategori": "Sugar"
+  },
+  {
+    "baslik": "What Is HbA1c?",
+    "gorsel_url": "",
+    "aciklama": "HbA1c is a blood test that shows your average blood sugar level over the past 2-3 months. Unlike daily readings, it reflects the long-term trend. It's used frequently by doctors to monitor diabetes.",
+    "kategori": "Sugar"
+  }
+]
